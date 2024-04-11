@@ -1,0 +1,20 @@
+<!-- render a mobile friendly canvas -->
+<canvas id="canvas" width="300" height="300"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/fabric"></script>
+
+<script>
+  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
+  const canvas = new fabric.Canvas('canvas');
+
+  // connect as player
+  socket.addEventListener("open", (event) => {
+    socket.send(JSON.stringify({ type: "initPlayer", data: { name: "Binh" }}));
+  });
+
+  // handle server message
+  // no current use
+  socket.addEventListener("message", (event) => {
+    console.log("Message from server ", event.data);
+  });
+
+</script>

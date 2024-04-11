@@ -2,6 +2,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/fabric"></script>
 <script>
+  const PLAYER_WIDTH = 35;
+  const PLAYER_HEIGHT = 40;
+
   const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
   const canvas = new fabric.Canvas('canvas');
 
@@ -16,12 +19,12 @@
     try {
       const state = JSON.parse(event.data);
       console.log(state);
-      state.players.forEach(({ x, y }) => {
+      state.players.forEach(({ position }) => {
         const rect = new fabric.Rect({
-          top: y,
-          left: x,
-          width: 60,
-          height: 70,
+          top: position.y,
+          left: position.x,
+          width: 35,
+          height: 40,
           fill: 'red',
         });
         canvas.add(rect);
