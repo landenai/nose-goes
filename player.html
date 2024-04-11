@@ -74,7 +74,7 @@
       console.log(`direction: ${JSON.stringify(direction)}`);
       socket.send(JSON.stringify({ type: "move", data: { direction }}));
     }
-    setTimeout(onTick, 100);
+    setTimeout(onTick, 20);
   };
 
   onTick();

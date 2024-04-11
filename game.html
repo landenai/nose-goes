@@ -5,8 +5,10 @@
   const PLAYER_WIDTH = 35;
   const PLAYER_HEIGHT = 40;
 
-  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
+  const playerInstances = {};
+
   const canvas = new fabric.Canvas('canvas');
+  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
 
   // connect as view
   socket.addEventListener("open", (event) => {
@@ -19,19 +21,33 @@
     try {
       const state = JSON.parse(event.data);
       console.log(state);
-      state.players.forEach(({ position }) => {
-        const rect = new fabric.Rect({
-          top: position.y,
-          left: position.x,
-          width: 35,
-          height: 40,
-          fill: 'red',
-        });
-        canvas.add(rect);
-      });
 
+      Object.keys(state.players).forEach(id => {
+        const { position } = state.players[id];
+
+        if (!playerInstances[id]) {
+          console.log(`new player: ${position.x} ${position.y}`);
+
+          const rect = new fabric.Rect({
+            top: position.y,
+            left: position.x,
+            width: 35,
+            height: 40,
+            fill: 'red',
+          });
+
+          playerInstances[id] = rect;
+
+          canvas.add(rect);
+        } else {
+          // just move the player instance
+          playerInstances[id].set({ top: position.y, left: position.x });
+        }
+
+        canvas.renderAll();
+      });
     } catch (e) {
-      console.error('malformed game state!');
+      console.error('malformed game state!', e);
     }
   });
 
