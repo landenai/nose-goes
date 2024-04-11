@@ -1,0 +1,81 @@
+<!-- render a mobile friendly canvas -->
+<canvas id="canvas" width="300" height="300"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/fabric"></script>
+
+<script>
+  const ARROW_LEFT = 37;
+  const ARROW_UP = 38;
+  const ARROW_RIGHT = 39;
+  const ARROW_DOWN = 40;
+
+  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
+  const canvas = new fabric.Canvas('canvas');
+
+  // Player state
+  const direction = {
+    x: 0,
+    y: 0,
+  };
+
+  // connect as player
+  socket.addEventListener("open", (event) => {
+    socket.send(JSON.stringify({ type: "initPlayer", data: { name: "Binh" }}));
+  });
+
+  // handle server message
+  // no current use
+  socket.addEventListener("message", (event) => {
+    console.log("Message from server ", event.data);
+  });
+
+  // handle key inputs
+  window.addEventListener("keydown", ({ keyCode, repeat }) => {
+    if (repeat) return;
+
+    console.log(`keydown: ${keyCode}`);
+
+    switch (keyCode) {
+      case ARROW_UP:
+        direction.y -= 1;
+        break;
+      case ARROW_DOWN:
+        direction.y += 1;
+        break;
+      case ARROW_LEFT:
+        direction.x -= 1;
+        break;
+      case ARROW_RIGHT:
+        direction.x += 1;
+        break;
+    }
+  });
+
+  window.addEventListener("keyup", ({ keyCode }) => {
+    console.log(`keyup: ${keyCode}`);
+
+    switch (keyCode) {
+      case ARROW_UP:
+        direction.y += 1;
+        break;
+      case ARROW_DOWN:
+        direction.y -= 1;
+        break;
+      case ARROW_LEFT:
+        direction.x += 1;
+        break;
+      case ARROW_RIGHT:
+        direction.x -= 1;
+        break;
+    }
+  });
+
+  const onTick = () => {
+    if (direction.x || direction.y) {
+      console.log(`direction: ${JSON.stringify(direction)}`);
+      socket.send(JSON.stringify({ type: "move", data: { direction }}));
+    }
+    setTimeout(onTick, 20);
+  };
+
+  onTick();
+</script>
