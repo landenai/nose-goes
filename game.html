@@ -1,0 +1,35 @@
+<canvas id="canvas" width="1280" height="700"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/fabric"></script>
+<script>
+  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
+  const canvas = new fabric.Canvas('canvas');
+
+  // connect as view
+  socket.addEventListener("open", (event) => {
+    socket.send(JSON.stringify({ type: "initView" }));
+  });
+
+  // handle game state update
+  socket.addEventListener("message", (event) => {
+    console.log("Message from server ", event.data);
+    try {
+      const state = JSON.parse(event.data);
+      console.log(state);
+      state.players.forEach(({ x, y }) => {
+        const rect = new fabric.Rect({
+          top: y,
+          left: x,
+          width: 60,
+          height: 70,
+          fill: 'red',
+        });
+        canvas.add(rect);
+      });
+
+    } catch (e) {
+      console.error('malformed game state!');
+    }
+  });
+
+</script>
