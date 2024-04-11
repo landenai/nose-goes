@@ -1,8 +1,16 @@
-<!-- render a mobile friendly canvas -->
-<script src="joy.js"></script>
+<html>
+
+<head>
+  <script src="joy.js"></script>
+  <script src="config.js"></script>
+</head>
+
 <body>
-  <div id="joyDiv" style="width:50vh;height:50vh;margin-bottom:20px; position: absolute; bottom:10vh; margin-left: auto; margin-right: auto; left: 0; right: 0"></div>
+  <div id="joyDiv"
+    style="width:50vh;height:50vh;margin-bottom:20px; position: absolute; bottom:10vh; margin-left: auto; margin-right: auto; left: 0; right: 0">
+  </div>
 </body>
+
 <script>
   const ARROW_LEFT = 37;
   const ARROW_UP = 38;
@@ -14,17 +22,17 @@
     x: 0,
     y: 0,
   };
-  const Joy1 = new JoyStick('joyDiv', {}, function(stickData) {
-    direction.x = stickData.x/100.0
-    direction.y = -(stickData.y/100.0)
-});
-  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
 
+  const Joy1 = new JoyStick('joyDiv', {}, function (stickData) {
+    direction.x = stickData.x / 100.0
+    direction.y = -(stickData.y / 100.0)
+  });
 
+  const socket = new WebSocket(CONFIG.websocketEndpoint);
 
   // connect as player
   socket.addEventListener("open", (event) => {
-    socket.send(JSON.stringify({ type: "initPlayer", data: { name: "Binh" }}));
+    socket.send(JSON.stringify({ type: "initPlayer", data: { name: "Binh" } }));
   });
 
   // handle server message
@@ -74,13 +82,16 @@
     }
   });
 
+  // every 20 ms, send direction vector update
   const onTick = () => {
     if (direction.x || direction.y) {
       console.log(`direction: ${JSON.stringify(direction)}`);
-      socket.send(JSON.stringify({ type: "move", data: { direction }}));
+      socket.send(JSON.stringify({ type: "move", data: { direction } }));
     }
     setTimeout(onTick, 20);
   };
 
   onTick();
 </script>
+
+</html>

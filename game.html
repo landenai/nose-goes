@@ -1,6 +1,14 @@
-<canvas id="canvas" width="1280" height="700"></canvas>
+<html>
 
-<script src="https://cdn.jsdelivr.net/npm/fabric"></script>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/fabric"></script>
+  <script src="config.js"></script>
+</head>
+
+<body>
+  <canvas id="canvas" width="1280" height="700"></canvas>
+</body>
+
 <script>
   const PLAYER_WIDTH = 35;
   const PLAYER_HEIGHT = 40;
@@ -8,7 +16,7 @@
   const playerInstances = {};
 
   const canvas = new fabric.Canvas('canvas');
-  const socket = new WebSocket("wss://f4fb-2602-fb65-0-100-fdb4-4aa9-11d1-b26.ngrok-free.app");
+  const socket = new WebSocket(CONFIG.websocketEndpoint);
 
   // connect as view
   socket.addEventListener("open", (event) => {
@@ -50,3 +58,5 @@
   });
 
 </script>
+
+</html>
