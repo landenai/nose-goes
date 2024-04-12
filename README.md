@@ -15,3 +15,11 @@ open game.html
 ## run the websocket server on 8080
 npm start
 ```
+
+## Things to consider
+- session storage
+- lag will hurt through zoom + with so many players
+- bad actors around player ws id?
+- bad actors around ws messages?
+- name input limit
+- names: add a unique per player seed? ws id? so two "ben"s aren't the same face
