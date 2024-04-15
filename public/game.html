@@ -26,6 +26,15 @@
             this.load.image('run2', 'run2.png');
             this.load.image('run3', 'run3.png');
             this.load.image('run4', 'run4.png');
+
+            this.load.path = 'assets/idle/';
+
+            this.load.image('idle1', 'idle1.png');
+            this.load.image('idle2', 'idle2.png');
+            this.load.image('idle3', 'idle3.png');
+            this.load.image('idle4', 'idle4.png');
+            this.load.image('idle5', 'idle5.png');
+
             this.socket = new WebSocket(CONFIG.websocketEndpoint);
 
             this.socket.addEventListener("open", (event) => {
@@ -36,9 +45,8 @@
               console.log("Message from server ", event.data);
               try {
                 const state = JSON.parse(event.data);
-
                 Object.keys(state.players).forEach(id => {
-                  const { position } = state.players[id];
+                  const { position, isMoving } = state.players[id];
 
                   if (!this.playerInstances[id]) {
                     let player = this.playerInit();
@@ -46,8 +54,8 @@
                   } else {
                     // just move the player instance
                     console.log(`updated position: (${position.x}, ${position.y})`)
-                    this.playerInstances[id].setX(position.x);
-                    this.playerInstances[id].setY(position.y);
+                    if (isMoving) this.physics.moveTo(this.playerInstances[id], position.x, position.y);
+                    else this.playerInstances[id].body.reset(position.x, position.y);
                   }
                 });
               } catch (e) {
@@ -57,9 +65,22 @@
         }
 
         create ()
-        {}
-        playerInit() {
+        {
           this.anims.create({
+              key: 'idle',
+                frames: [
+                    { key: 'idle1' },
+                    { key: 'idle2' },
+                    { key: 'idle3' },
+                    { key: 'idle4' },
+                    { key: 'idle5', duration: 100 }
+                   
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+
+            this.anims.create({
                 key: 'run',
                 frames: [
                     { key: 'run1' },
@@ -71,7 +92,10 @@
                 frameRate: 8,
                 repeat: -1
             });
-            let player = this.add.sprite(400, 300, 'run1')
+        }
+        playerInit() {
+
+            let player = this.physics.add.sprite(400, 300, 'run1')
                 .play('run');
 
             return player;
@@ -85,6 +109,9 @@
         width: 1280,
         height: 700,
         backgroundColor: '#fbf0e4',
+        physics: {
+          default: 'arcade',
+        },
         scene: Example
     };
 

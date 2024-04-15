@@ -83,9 +83,14 @@
   });
 
   // every 20 ms, send direction vector update
+  let isMoving = false;
   const onTick = () => {
     if (direction.x || direction.y) {
+      isMoving = true;
       console.log(`direction: ${JSON.stringify(direction)}`);
+      socket.send(JSON.stringify({ type: "move", data: { direction } }));
+    } else if(isMoving) {
+      isMoving=false;
       socket.send(JSON.stringify({ type: "move", data: { direction } }));
     }
     setTimeout(onTick, 20);

@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { stringify, v4 as uuid } from "uuid";
-import express from 'express';
+import express from "express";
 
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
@@ -14,9 +14,9 @@ const gameState = {
 // Static file mgmt
 
 const app = express();
-app.use(express.static('./public'));
+app.use(express.static("./public"));
 app.listen(3000, () => {
-  console.log('Express server listening on 3000');
+  console.log("Express server listening on 3000");
 });
 
 // Websocket definition
@@ -78,6 +78,7 @@ const addPlayer = ({ name, id }) => {
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
+  let isMoving = deltaX && deltaY;
   let { x, y } = gameState.players[id].position;
   x += deltaX * SPEED;
   y += deltaY * SPEED;
@@ -91,5 +92,6 @@ const movePlayer = ({ deltaX, deltaY, id }) => {
   gameState.players[id] = {
     ...gameState.players[id],
     position: { x, y },
+    isMoving: isMoving,
   };
 };
