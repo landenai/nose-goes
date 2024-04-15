@@ -24,5 +24,30 @@ npm start
 - name input limit
 - names: add a unique per player seed? ws id? so two "ben"s aren't the same face
 
+## TODO:
+- [ ] Cute little stick dudes
+  - [x] Make / Add a sprite sheet
+  - [x] Animate it
+  - [ ] Make them distinguishable
+- [ ] Make it a game
+  - [ ] Start: Drop a nose randomly
+  - [ ] End: All players are on the nose
+  - [ ] Loser: last person to the nose => some sad animation?
+  - [ ] Winner: points?
+- [ ] Testing setup
+  - [ ] Script x number of players connecting and sending a bunch of calls to the service
+  - [ ] Optimize for lag / paints / etc
+- [ ] Player lifecycle management
+  - [ ] Graveyard for disconnected players
+  - [ ] Session recovery for players coming back
+- [ ] Websocket management
+  - [ ] mitigate / handle mobile disconnects...somehow
+- [ ] Hosting
+  - [ ] host the game server somewhere
+- [ ] Misc
+  - [ ] color trails
+  - [ ] a setting
+  - [ ] a maze / obstacles
+
 ## Acknowledgements
 - cute stickmen from [crazygamer3124](https://crazygamer3124.itch.io/pixel-stickman-8x8)
