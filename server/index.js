@@ -1,16 +1,29 @@
 import { WebSocketServer } from "ws";
 import { stringify, v4 as uuid } from "uuid";
+import express from 'express';
 
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
 const SPEED = 5;
 
-const wss = new WebSocketServer({ port: 8080 });
 const gameState = {
   players: {},
 };
+
+// Static file mgmt
+
+const app = express();
+app.use(express.static('./public'));
+app.listen(3000, () => {
+  console.log('Express server listening on 3000');
+});
+
+// Websocket definition
+const wss = new WebSocketServer({ port: 8080 });
+
 let viewClient = { id: null, ws: null };
+
 wss.on("connection", function connection(ws) {
   console.log("new connection");
   const id = uuid();

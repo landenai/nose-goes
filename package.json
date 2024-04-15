@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./server/websocket.js",
+    "start": "node ./server/index.js",
     "deploy": "gh-pages -d dist"
   },
   "author": "",
@@ -14,6 +14,7 @@
     "gh-pages": "^6.1.1"
   },
   "dependencies": {
+    "express": "^4.19.2",
     "uuid": "^9.0.1",
     "ws": "^8.16.0"
   }
