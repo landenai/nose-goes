@@ -4,14 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./server/index.js",
-    "deploy": "gh-pages -d dist"
+    "start": "nodemon ./server/index.js"
   },
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "gh-pages": "^6.1.1"
+    "gh-pages": "^6.1.1",
+    "nodemon": "^3.1.0"
   },
   "dependencies": {
     "express": "^4.19.2",
