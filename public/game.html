@@ -1,21 +1,92 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script>
+    <script src="config.js"></script>
+  </head>
 <body>
 
   
   <script>
+    const socket = new WebSocket(CONFIG.websocketEndpoint);
+
+    // connect as view
+    socket.addEventListener("open", (event) => {
+      socket.send(JSON.stringify({ type: "initView" }));
+    });
+
+    // handle game state update
+    socket.addEventListener("message", (event) => {
+      console.log("Message from server ", event.data);
+      try {
+        const state = JSON.parse(event.data);
+
+        Object.keys(state.players).forEach(id => {
+          const { position } = state.players[id];
+
+          if (!playerInstances[id]) {
+            // TODO: draw player instance at location + save into playerInstances object
+
+          } else {
+            // just move the player instance
+            console.log(`updated position: (${position.x}, ${position.y})`)
+            playerInstances[id].set({ top: position.y, left: position.x });
+          }
+
+          canvas.renderAll();
+        });
+      } catch (e) {
+        console.error('malformed game state!', e);
+      }
+    });
+
     class Example extends Phaser.Scene
     {
+        constructor ()
+        {
+            super();
+        }
+
+        preload ()
+        {
+            this.load.path = 'assets/run/';
+
+            this.load.image('run1', 'run1.png');
+            this.load.image('run2', 'run2.png');
+            this.load.image('run3', 'run3.png');
+            this.load.image('run4', 'run4.png');
+        }
+
+        create ()
+        {
+            this.anims.create({
+                key: 'run',
+                frames: [
+                    { key: 'run1' },
+                    { key: 'run2' },
+                    { key: 'run3' },
+                    { key: 'run4', duration: 100 }
+                    
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+
+            this.add.sprite(400, 300, 'run1')
+                .play('run');
+        }
     }
 
     const config = {
-      type: Phaser.AUTO,
-      width: 800,
-      height: 600,
-      scene: Example,
+        type: Phaser.AUTO,
+        parent: 'phaser-example',
+        width: 1280,
+        height: 700,
+        backgroundColor: '#fbf0e4',
+        scene: Example
     };
 
-    const game = new Phase.Game(config);
+    const game = new Phaser.Game(config);
   </script>
 
 
