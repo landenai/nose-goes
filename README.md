@@ -23,3 +23,6 @@ npm start
 - bad actors around ws messages?
 - name input limit
 - names: add a unique per player seed? ws id? so two "ben"s aren't the same face
+
+## Acknowledgements
+- cute stickmen from [crazygamer3124](https://crazygamer3124.itch.io/pixel-stickman-8x8)
