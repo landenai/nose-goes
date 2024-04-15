@@ -8,42 +8,14 @@
 
   
   <script>
-    // ------- Websocket / game state handling -------- //
-    const socket = new WebSocket(CONFIG.websocketEndpoint);
 
-    // connect as view
-    socket.addEventListener("open", (event) => {
-      socket.send(JSON.stringify({ type: "initView" }));
-    });
-
-    // handle game state update
-    socket.addEventListener("message", (event) => {
-      console.log("Message from server ", event.data);
-      try {
-        const state = JSON.parse(event.data);
-
-        Object.keys(state.players).forEach(id => {
-          const { position } = state.players[id];
-
-          if (!playerInstances[id]) {
-            // TODO: draw player instance at location + save into playerInstances object
-          } else {
-            // just move the player instance
-            console.log(`updated position: (${position.x}, ${position.y})`)
-            // TODO: update player position
-          }
-        });
-      } catch (e) {
-        console.error('malformed game state!', e);
-      }
-    });
-
-    // ------- phaser painting -------- //
+    // ------- phaser painting -------- // 
     class Example extends Phaser.Scene
     {
         constructor ()
-        {
-            super();
+        {  
+          super();
+          this.playerInstances = {};
         }
 
         preload ()
@@ -54,11 +26,40 @@
             this.load.image('run2', 'run2.png');
             this.load.image('run3', 'run3.png');
             this.load.image('run4', 'run4.png');
+            this.socket = new WebSocket(CONFIG.websocketEndpoint);
+
+            this.socket.addEventListener("open", (event) => {
+               this.socket.send(JSON.stringify({ type: "initView" }));
+             });
+
+            this.socket.addEventListener("message", (event) => {
+              console.log("Message from server ", event.data);
+              try {
+                const state = JSON.parse(event.data);
+
+                Object.keys(state.players).forEach(id => {
+                  const { position } = state.players[id];
+
+                  if (!this.playerInstances[id]) {
+                    let player = this.playerInit();
+                    this.playerInstances[id] = player;
+                  } else {
+                    // just move the player instance
+                    console.log(`updated position: (${position.x}, ${position.y})`)
+                    this.playerInstances[id].setX(position.x);
+                    this.playerInstances[id].setY(position.y);
+                  }
+                });
+              } catch (e) {
+                console.error('malformed game state!', e);
+              }
+            });
         }
 
         create ()
-        {
-            this.anims.create({
+        {}
+        playerInit() {
+          this.anims.create({
                 key: 'run',
                 frames: [
                     { key: 'run1' },
@@ -70,10 +71,12 @@
                 frameRate: 8,
                 repeat: -1
             });
-
-            this.add.sprite(400, 300, 'run1')
+            let player = this.add.sprite(400, 300, 'run1')
                 .play('run');
+
+            return player;
         }
+      
     }
 
     const config = {
@@ -86,6 +89,7 @@
     };
 
     const game = new Phaser.Game(config);
+
   </script>
 
 
