@@ -6,9 +6,14 @@ const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
 const SPEED = 5;
+const MIN_DISTANCE = 200;
 
 const gameState = {
   players: {},
+  nose: {
+    previousLocation: {},
+    currentLocation: {},
+  },
 };
 
 // Static file mgmt
@@ -40,7 +45,6 @@ wss.on("connection", function connection(ws) {
       const json = JSON.parse(data);
       switch (json.type) {
         case "initPlayer":
-          console.log(JSON.stringify(json));
           addPlayer({ name: json.data.name, id });
           viewClient.ws.send(JSON.stringify(gameState));
           ws.send(JSON.stringify({ data: { id: id } }));
@@ -52,6 +56,7 @@ wss.on("connection", function connection(ws) {
             break;
           }
           viewClient = { id: id, ws: ws };
+          gameState.nose.currentLocation = generateNose();
           viewClient.ws.send(JSON.stringify(gameState));
           break;
         case "move":
@@ -74,7 +79,11 @@ const addPlayer = ({ name, id }) => {
     console.log("invalid player");
     return;
   }
-  gameState.players[id] = { name: name, position: STARTING_POSITION };
+  gameState.players[id] = {
+    name: name,
+    position: STARTING_POSITION,
+    isFinished: false,
+  };
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
@@ -94,4 +103,29 @@ const movePlayer = ({ deltaX, deltaY, id }) => {
     position: { x, y },
     isMoving: isMoving,
   };
+};
+
+const generateNose = () => {
+  const x = Math.floor(Math.random() * X_BOUND) + 1;
+  const y = Math.floor(Math.random() * Y_BOUND) + 1;
+  return { x, y };
+};
+
+const generateNewNose = () => {
+  let distance;
+  let x, y;
+  do {
+    [x, y] = generateNoseLocation();
+    distance = calculateDistance(
+      x,
+      y,
+      gameState.nose.currentLocation.x,
+      gameState.nose.currentLocation.y
+    );
+  } while (distance < MIN_DISTANCE);
+  return { x, y };
+};
+
+const calculateDistance = (x1, y1, x2, y2) => {
+  return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 };

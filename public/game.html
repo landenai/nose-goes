@@ -16,6 +16,8 @@
         {  
           super();
           this.playerInstances = {};
+          this.winners = {};
+          this.nose = {};
         }
 
         preload ()
@@ -35,6 +37,10 @@
             this.load.image('idle4', 'idle4.png');
             this.load.image('idle5', 'idle5.png');
 
+            this.load.path = 'assets/nose/';
+
+            this.load.svg('nose', 'nose.svg',{width: 100, height: 100})
+
             this.socket = new WebSocket(CONFIG.websocketEndpoint);
 
             this.socket.addEventListener("open", (event) => {
@@ -42,7 +48,7 @@
              });
 
             this.socket.addEventListener("message", (event) => {
-              console.log("Message from server ", event.data);
+              //console.log("Message from server ", event.data);
               try {
                 const state = JSON.parse(event.data);
                 Object.keys(state.players).forEach(id => {
@@ -53,11 +59,14 @@
                     this.playerInstances[id] = player;
                   } else {
                     // just move the player instance
-                    console.log(`updated position: (${position.x}, ${position.y})`)
+                    //console.log(`updated position: (${position.x}, ${position.y})`)
                     if (isMoving) this.physics.moveTo(this.playerInstances[id], position.x, position.y);
                     else this.playerInstances[id].body.reset(position.x, position.y);
                   }
                 });
+                if(state.nose) {
+                  this.drawNose(state.nose.currentLocation);
+                }
               } catch (e) {
                 console.error('malformed game state!', e);
               }
@@ -92,13 +101,26 @@
                 frameRate: 8,
                 repeat: -1
             });
+            this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) =>
+        {
+           console.log("overlap")
+        });
         }
         playerInit() {
 
             let player = this.physics.add.sprite(400, 300, 'run1')
                 .play('run');
-
+            player.body.onOverlap = true;
+            this.physics.add.overlap(player, this.nose)
             return player;
+        }
+
+        drawNose({x,y}) {
+          this.nose = this.physics.add.image(x, y, 'nose');
+        }
+
+        checkForFinish() {
+
         }
       
     }
