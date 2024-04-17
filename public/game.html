@@ -44,7 +44,6 @@
              });
 
             this.socket.addEventListener("message", (event) => {
-              //console.log("Message from server ", event.data);
               try {
                 const state = JSON.parse(event.data);
                 Object.keys(state.players).forEach(id => {
@@ -114,7 +113,7 @@
             this.physics.world.enableBody(playerContainer);
 
             playerContainer.body.onOverlap = true;
-            this.physics.add.overlap(player, this.nose)
+            this.physics.add.overlap(playerContainer, this.nose)
 
             // add face towards top
             let rnd = 'Binh' + Math.random();
