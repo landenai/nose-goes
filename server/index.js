@@ -5,7 +5,7 @@ import express from "express";
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
-const SPEED = 5;
+const SPEED = 3; // SPEED * refreshRateMS becomes moveTo speed
 const MIN_DISTANCE = 200;
 
 const gameState = {
@@ -88,15 +88,23 @@ const addPlayer = ({ name, id }) => {
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
   let isMoving = deltaX && deltaY;
+
   let { x, y } = gameState.players[id].position;
-  x += deltaX * SPEED;
-  y += deltaY * SPEED;
+  console.log(`---- move ${id} ----`);
+  console.log(`ogpos: ${x} ${y}`);
+  console.log(`invec: ${deltaX} ${deltaY}`);
+  console.log(`delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(deltaY * SPEED)}`);
+
+  x += Math.floor(deltaX * SPEED);
+  y += Math.floor(deltaY * SPEED);
+
   if (x > X_BOUND || x < -10) {
     return;
   }
   if (y > Y_BOUND || y < -10) {
     return;
   }
+  console.log(`  out: ${x} ${y}`);
 
   gameState.players[id] = {
     ...gameState.players[id],

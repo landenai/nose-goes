@@ -53,16 +53,20 @@
                     this.playerInstances[id] = this.playerInit();
                   } else {
                     // just move the player instance
-                    console.log(this.playerInstances[id].toJSON());
                     if (isMoving) {
                       this.physics.moveTo(
                         this.playerInstances[id],
                         position.x,
-                        position.y
+                        position.y,
+                        140, // speed (px/s), should be higher than ~2 * player.html refreshRate * gameState SPEED
+
                       );
-                    } else this.playerInstances[id].body.reset(position.x, position.y);
+                    } else { 
+                      this.playerInstances[id].body.reset(position.x, position.y);
+                    }
                   }
                 });
+
                 if(state.nose) {
                   this.drawNose(state.nose.currentLocation);
                 }
@@ -99,10 +103,9 @@
                 frameRate: 8,
                 repeat: -1
             });
-            this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) =>
-        {
-           console.log("overlap")
-        });
+            this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
+              console.log("overlap")
+            });
         }
 
         playerInit() {
