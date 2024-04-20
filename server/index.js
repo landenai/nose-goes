@@ -5,7 +5,7 @@ import express from 'express';
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
-const SPEED = 3; // SPEED * refreshRateMS becomes moveTo speed
+const SPEED = 3;
 const MIN_DISTANCE = 200;
 
 const gameState = {
