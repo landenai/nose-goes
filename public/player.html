@@ -24,8 +24,8 @@
   };
 
   const Joy1 = new JoyStick('joyDiv', {}, (stickData) => {
-    direction.x = stickData.x / 100.0
-    direction.y = -(stickData.y / 100.0)
+    direction.x = Number(stickData.x);
+    direction.y = Number(-stickData.y);
   });
 
   const socket = new WebSocket(CONFIG.websocketEndpoint);

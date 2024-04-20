@@ -46,8 +46,11 @@ wss.on("connection", function connection(ws) {
       switch (json.type) {
         case "initPlayer":
           addPlayer({ name: json.data.name, id });
-          viewClient.ws.send(JSON.stringify(gameState));
-          ws.send(JSON.stringify({ data: { id: id } }));
+          viewClient.ws.send(JSON.stringify({
+            type: 'initPlayer',
+            player: gameState.players[id],
+          }));
+          ws.send(JSON.stringify({ data: { id } }));
           break;
         case "initView":
           console.log("initView");
@@ -57,7 +60,10 @@ wss.on("connection", function connection(ws) {
           }
           viewClient = { id: id, ws: ws };
           gameState.nose.currentLocation = generateNose();
-          viewClient.ws.send(JSON.stringify(gameState));
+          viewClient.ws.send(JSON.stringify({ 
+            type: 'initView',
+            gameState
+          }));
           break;
         case "move":
           movePlayer({
@@ -65,7 +71,10 @@ wss.on("connection", function connection(ws) {
             deltaY: json.data.direction.y,
             id: id,
           });
-          viewClient.ws.send(JSON.stringify(gameState));
+          viewClient.ws.send(JSON.stringify({ 
+            type: 'move',
+            gameState
+          }));
           break;
       }
     } catch (e) {
@@ -74,20 +83,22 @@ wss.on("connection", function connection(ws) {
   });
 });
 
+// adds player to global game state
 const addPlayer = ({ name, id }) => {
   if (!name || !id) {
     console.log("invalid player");
     return;
   }
   gameState.players[id] = {
-    name: name,
+    id,
+    name,
     position: STARTING_POSITION,
     isFinished: false,
   };
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
-  let isMoving = deltaX && deltaY;
+  let isMoving = Boolean(deltaX && deltaY);
 
   let { x, y } = gameState.players[id].position;
   console.log(`---- move ${id} ----`);
@@ -109,7 +120,7 @@ const movePlayer = ({ deltaX, deltaY, id }) => {
   gameState.players[id] = {
     ...gameState.players[id],
     position: { x, y },
-    isMoving: isMoving,
+    isMoving,
   };
 };
 
