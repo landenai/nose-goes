@@ -30,6 +30,11 @@
         try {
           const event = JSON.parse(message.data);
 
+          // TODO: should probably moved into the `type` system
+          if(event.loser) {
+            this.declareLoser(event.loser)
+          }
+
           switch (event.type) {
             case "initView":
               // sent on first connection
@@ -124,7 +129,14 @@
           repeat: -1
         });
         this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
-          console.log("overlap")
+           const playerId = Object.keys(this.playerInstances).find(key => this.playerInstances[key] === gameObject1);
+           this.socket.send(JSON.stringify({
+            type: "finish",
+            data: {
+              id: playerId,
+            }
+           }));
+           gameObject1.disableBody();
         });
 
         this.socket = new WebSocket(CONFIG.websocketEndpoint);
@@ -166,6 +178,10 @@
 
         console.log(`adding new player ${name}`);
         return playerContainer;
+      }
+
+      declareLoser(loser) {
+        const text = this.add.text(25, 250, `${loser} loses!`);
       }
     }
 
