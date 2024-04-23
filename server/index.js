@@ -14,6 +14,7 @@ const gameState = {
     previousLocation: {},
     currentLocation: {},
   },
+  loser: null,
 };
 
 // Static file mgmt
@@ -67,6 +68,12 @@ wss.on("connection", function connection(ws) {
           });
           viewClient.ws.send(JSON.stringify(gameState));
           break;
+        case "finish":
+          gameState.players[json.data.id].isFinished = true;
+          const loser = checkForLoser();
+          if (loser) gameState.loser = loser;
+          viewClient.ws.send(JSON.stringify(gameState));
+          break;
       }
     } catch (e) {
       console.log(e);
@@ -79,6 +86,7 @@ const addPlayer = ({ name, id }) => {
     console.log("invalid player");
     return;
   }
+  console.log(id);
   gameState.players[id] = {
     name: name,
     position: STARTING_POSITION,
@@ -128,4 +136,17 @@ const generateNewNose = () => {
 
 const calculateDistance = (x1, y1, x2, y2) => {
   return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+};
+
+const checkForLoser = () => {
+  let loser = null;
+  for (const [id, player] of Object.entries(gameState.players)) {
+    if (player.isFinished) continue;
+    if (!loser) {
+      loser = null;
+      break;
+    }
+    loser = id;
+  }
+  return loser;
 };

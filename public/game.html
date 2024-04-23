@@ -48,7 +48,6 @@
              });
 
             this.socket.addEventListener("message", (event) => {
-              //console.log("Message from server ", event.data);
               try {
                 const state = JSON.parse(event.data);
                 Object.keys(state.players).forEach(id => {
@@ -59,13 +58,16 @@
                     this.playerInstances[id] = player;
                   } else {
                     // just move the player instance
-                    //console.log(`updated position: (${position.x}, ${position.y})`)
+                    console.log(this.playerInstances);
                     if (isMoving) this.physics.moveTo(this.playerInstances[id], position.x, position.y);
                     else this.playerInstances[id].body.reset(position.x, position.y);
                   }
                 });
                 if(state.nose) {
                   this.drawNose(state.nose.currentLocation);
+                }
+                if(state.loser) {
+                  this.declareLoser(state.loser)
                 }
               } catch (e) {
                 console.error('malformed game state!', e);
@@ -101,9 +103,17 @@
                 frameRate: 8,
                 repeat: -1
             });
+            // Player has reached nose
             this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) =>
         {
-           console.log("overlap")
+           const playerId = Object.keys(this.playerInstances).find(key => this.playerInstances[key] === gameObject1);
+           this.socket.send(JSON.stringify({
+            type: "finish",
+            data: {
+              id: playerId,
+            }
+           }));
+           gameObject1.disableBody();
         });
         }
         playerInit() {
@@ -119,8 +129,8 @@
           this.nose = this.physics.add.image(x, y, 'nose');
         }
 
-        checkForFinish() {
-
+        declareLoser(loser) {
+          const text = this.add.text(25, 250, `${loser} loses!`);
         }
       
     }
