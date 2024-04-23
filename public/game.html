@@ -5,23 +5,19 @@
     <script src="config.js"></script>
   </head>
 <body>
-
-  
   <script>
 
     // ------- phaser painting -------- // 
     class Example extends Phaser.Scene
     {
-        constructor ()
-        {  
+        constructor () {
           super();
           this.playerInstances = {};
           this.winners = {};
           this.nose = {};
         }
 
-        preload ()
-        {
+        preload () {
             this.load.path = 'assets/run/';
 
             this.load.image('run1', 'run1.png');
@@ -54,13 +50,23 @@
                   const { position, isMoving } = state.players[id];
 
                   if (!this.playerInstances[id]) {
-                    let player = this.playerInit();
-                    this.playerInstances[id] = player;
+                    this.playerInstances[id] = this.playerInit();
                   } else {
                     // just move the player instance
+<<<<<<< HEAD
                     console.log(this.playerInstances);
                     if (isMoving) this.physics.moveTo(this.playerInstances[id], position.x, position.y);
                     else this.playerInstances[id].body.reset(position.x, position.y);
+=======
+                    console.log(this.playerInstances[id].toJSON());
+                    if (isMoving) {
+                      this.physics.moveTo(
+                        this.playerInstances[id],
+                        position.x,
+                        position.y
+                      );
+                    } else this.playerInstances[id].body.reset(position.x, position.y);
+>>>>>>> 242530bd9255e9dedd9b4203321f682dbda6f489
                   }
                 });
                 if(state.nose) {
@@ -75,8 +81,7 @@
             });
         }
 
-        create ()
-        {
+        create() {
           this.anims.create({
               key: 'idle',
                 frames: [
@@ -116,13 +121,33 @@
            gameObject1.disableBody();
         });
         }
-        playerInit() {
 
-            let player = this.physics.add.sprite(400, 300, 'run1')
-                .play('run');
-            player.body.onOverlap = true;
-            this.physics.add.overlap(player, this.nose)
-            return player;
+        playerInit() {
+            const playerSprite = this.add.sprite(0, 0, 'run1').play('run');
+            playerSprite.setScale(1.2);
+
+            const playerContainer = this.add.container(400, 300, [playerSprite]);
+            this.physics.world.enableBody(playerContainer);
+
+            playerContainer.body.onOverlap = true;
+            this.physics.add.overlap(playerContainer, this.nose)
+
+            // add face towards top
+            let rnd = 'Binh' + Math.random();
+            this.load.image({
+              key: rnd,
+              url: 'https://api.dicebear.com/8.x/bottts/svg?seed=Mittens',
+            });
+            let scene = this;
+
+            this.load.on(`filecomplete-image-${rnd}`, function (key, type, data) {
+              const face = scene.add.image(0, -20, rnd);
+              face.setScale(0.3);
+              playerContainer.add(face);
+            });
+            this.load.start();
+
+            return playerContainer;
         }
 
         drawNose({x,y}) {

@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { stringify, v4 as uuid } from "uuid";
+import { v4 as uuid } from "uuid";
 import express from "express";
 
 const STARTING_POSITION = { x: 640, y: 350 };
@@ -35,7 +35,7 @@ wss.on("connection", function connection(ws) {
   const id = uuid();
   ws.on("error", console.error);
 
-  ws.on("close", function message(data) {
+  ws.on("close", function message() {
     if (id === viewClient.id) {
       viewClient = { id: null, ws: null };
     }
