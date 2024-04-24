@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./server/index.js"
+    "start": "nodemon ./server/index.js",
+    "lint": "eslint ."
   },
   "author": "",
   "license": "ISC",

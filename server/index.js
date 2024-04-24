@@ -31,18 +31,18 @@ const wss = new WebSocketServer({ port: 8080 });
 
 let viewClient = { id: null, ws: null };
 
-wss.on('connection', function connection(ws) {
+wss.on('connection', (ws) => {
   console.log('new connection');
   const id = uuid();
   ws.on('error', console.error);
 
-  ws.on('close', function message() {
+  ws.on('close', () => {
     if (id === viewClient.id) {
       viewClient = { id: null, ws: null };
     }
   });
 
-  ws.on('message', function message(data) {
+  ws.on('message', (data) => {
     try {
       const json = JSON.parse(data);
       switch (json.type) {
@@ -52,7 +52,7 @@ wss.on('connection', function connection(ws) {
             JSON.stringify({
               type: 'initPlayer',
               player: gameState.players[id],
-            })
+            }),
           );
           ws.send(JSON.stringify({ data: { id } }));
           break;
@@ -68,23 +68,23 @@ wss.on('connection', function connection(ws) {
             JSON.stringify({
               type: 'initView',
               gameState,
-            })
+            }),
           );
           break;
         case 'move':
           movePlayer({
             deltaX: json.data.direction.x,
             deltaY: json.data.direction.y,
-            id: id,
+            id,
           });
           viewClient.ws.send(
             JSON.stringify({
               type: 'move',
               gameState,
-            })
+            }),
           );
           break;
-        case "finish":
+        case 'finish':
           gameState.players[json.data.id].isFinished = true;
           const loser = checkForLoser();
           if (loser) {
@@ -93,7 +93,7 @@ wss.on('connection', function connection(ws) {
               JSON.stringify({
                 type: 'loser',
                 gameState,
-              })
+              }),
             );
           }
           break;
@@ -120,7 +120,7 @@ const addPlayer = ({ name, id }) => {
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
-  let isMoving = Boolean(deltaX && deltaY);
+  const isMoving = Boolean(deltaX && deltaY);
 
   let { x, y } = gameState.players[id].position;
   console.log(`---- move ${id} ----`);
@@ -128,8 +128,8 @@ const movePlayer = ({ deltaX, deltaY, id }) => {
   console.log(`invec: ${deltaX} ${deltaY}`);
   console.log(
     `delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(
-      deltaY * SPEED
-    )}`
+      deltaY * SPEED,
+    )}`,
   );
 
   x += Math.floor(deltaX * SPEED);
@@ -158,22 +158,21 @@ const generateNose = () => {
 
 const generateNewNose = () => {
   let distance;
-  let x, y;
+  let x; let
+    y;
   do {
     [x, y] = generateNoseLocation();
     distance = calculateDistance(
       x,
       y,
       gameState.nose.currentLocation.x,
-      gameState.nose.currentLocation.y
+      gameState.nose.currentLocation.y,
     );
   } while (distance < MIN_DISTANCE);
   return { x, y };
 };
 
-const calculateDistance = (x1, y1, x2, y2) => {
-  return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-};
+const calculateDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 
 const checkForLoser = () => {
   let loser = null;
