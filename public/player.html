@@ -95,8 +95,8 @@
       isMoving = true;
 
       let normalized = normalizeDirection(direction);
-      console.log(` direction: ${JSON.stringify(direction)}`);
-      console.log(`normalized: ${JSON.stringify(normalized)}`);
+     //  console.log(` direction: ${JSON.stringify(direction)}`);
+     //  console.log(`normalized: ${JSON.stringify(normalized)}`);
 
       socket.send(JSON.stringify({ type: "move", data: { direction: normalized } }));
     } else if (isMoving) {

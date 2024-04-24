@@ -5,7 +5,7 @@ import express from 'express';
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
-const SPEED = 3;
+const SPEED = 8;
 const MIN_DISTANCE = 200;
 
 const gameState = {
@@ -26,6 +26,7 @@ app.listen(3000, () => {
 });
 
 // Websocket definition
+// TODO: possibly separate primarily incoming player WS from primarily outgoing view WS?
 const wss = new WebSocketServer({ port: 8080 });
 
 let viewClient = { id: null, ws: null };
@@ -86,8 +87,15 @@ wss.on('connection', function connection(ws) {
         case "finish":
           gameState.players[json.data.id].isFinished = true;
           const loser = checkForLoser();
-          if (loser) gameState.loser = loser;
-          viewClient.ws.send(JSON.stringify(gameState));
+          if (loser) {
+            gameState.loser = loser;
+            viewClient.ws.send(
+              JSON.stringify({
+                type: 'loser',
+                gameState,
+              })
+            );
+          }
           break;
       }
     } catch (e) {

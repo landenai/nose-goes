@@ -30,11 +30,6 @@
         try {
           const event = JSON.parse(message.data);
 
-          // TODO: should probably moved into the `type` system
-          if(event.loser) {
-            this.declareLoser(event.loser)
-          }
-
           switch (event.type) {
             case "initView":
               // sent on first connection
@@ -67,12 +62,15 @@
                     this.playerInstances[id],
                     position.x,
                     position.y,
-                    140, // speed (px/s), should be higher than ~2 * player.html refreshRate * gameState SPEED
+                    180, // speed (px/s), should be higher than ~2 * gameState SPEED / player.html refreshRate
                   );
                 } else {
                   this.playerInstances[id].body.reset(position.x, position.y);
                 }
               });
+              break;
+            case "loser":
+              this.declareLoser(event.gameState.loser)
               break;
           }
         } catch (e) {
@@ -128,6 +126,7 @@
           frameRate: 8,
           repeat: -1
         });
+
         this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
            const playerId = Object.keys(this.playerInstances).find(key => this.playerInstances[key] === gameObject1);
            this.socket.send(JSON.stringify({
@@ -145,7 +144,6 @@
           this.socket.send(JSON.stringify({ type: "initView" }));
         });
 
-        // arrow function here to preserve `this` in handleWSMessage (better way?)
         this.socket.addEventListener("message", (message) => this.handleWSMessage(message));
       }
 
