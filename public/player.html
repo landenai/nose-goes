@@ -41,6 +41,11 @@
     console.log("Message from server ", event.data);
   });
 
+  // handle connection close
+  socket.addEventListener("close", (event) => {
+    console.log("Connection closed: ", event.data);
+  });
+
   // handle key inputs
   window.addEventListener("keydown", ({ keyCode, repeat }) => {
     if (repeat) return;

@@ -62,7 +62,7 @@ wss.on('connection', function connection(ws) {
             console.log('view client already connected');
             break;
           }
-          viewClient = { id: id, ws: ws };
+          viewClient = { id, ws };
           gameState.nose.currentLocation = generateNose();
           viewClient.ws.send(
             JSON.stringify({
