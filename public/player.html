@@ -23,9 +23,9 @@
     y: 0,
   };
 
-  const Joy1 = new JoyStick('joyDiv', {}, function (stickData) {
-    direction.x = stickData.x / 100.0
-    direction.y = -(stickData.y / 100.0)
+  const Joy1 = new JoyStick('joyDiv', {}, (stickData) => {
+    direction.x = Number(stickData.x);
+    direction.y = Number(-stickData.y);
   });
 
   const socket = new WebSocket(CONFIG.websocketEndpoint);
@@ -44,9 +44,6 @@
   // handle key inputs
   window.addEventListener("keydown", ({ keyCode, repeat }) => {
     if (repeat) return;
-
-    console.log(`keydown: ${keyCode}`);
-
     switch (keyCode) {
       case ARROW_UP:
         direction.y -= 1;
@@ -64,8 +61,6 @@
   });
 
   window.addEventListener("keyup", ({ keyCode }) => {
-    console.log(`keyup: ${keyCode}`);
-
     switch (keyCode) {
       case ARROW_UP:
         direction.y += 1;
@@ -82,18 +77,33 @@
     }
   });
 
-  // every 20 ms, send direction vector update
+  // assumes that x and y are non-zero (because of where it is invoked in `onTick()`
+  const normalizeDirection = ({ x, y }) => {
+    let magnitude = 1 / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    return {
+      x: x * magnitude,
+      y: y * magnitude,
+    };
+  };
+
+  // every x ms, send direction vector update
+  // `isMoving` acts as a toggle, indicating that the joystick
+  // has returned to a resting state
   let isMoving = false;
   const onTick = () => {
     if (direction.x || direction.y) {
       isMoving = true;
-      console.log(`direction: ${JSON.stringify(direction)}`);
-      socket.send(JSON.stringify({ type: "move", data: { direction } }));
-    } else if(isMoving) {
-      isMoving=false;
+
+      let normalized = normalizeDirection(direction);
+     //  console.log(` direction: ${JSON.stringify(direction)}`);
+     //  console.log(`normalized: ${JSON.stringify(normalized)}`);
+
+      socket.send(JSON.stringify({ type: "move", data: { direction: normalized } }));
+    } else if (isMoving) {
+      isMoving = false;
       socket.send(JSON.stringify({ type: "move", data: { direction } }));
     }
-    setTimeout(onTick, 20);
+    setTimeout(onTick, CONFIG.refreshRateMS);
   };
 
   onTick();

@@ -1,11 +1,11 @@
-import { WebSocketServer } from "ws";
-import { v4 as uuid } from "uuid";
-import express from "express";
+import { WebSocketServer } from 'ws';
+import { v4 as uuid } from 'uuid';
+import express from 'express';
 
 const STARTING_POSITION = { x: 640, y: 350 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
-const SPEED = 5;
+const SPEED = 8;
 const MIN_DISTANCE = 200;
 
 const gameState = {
@@ -20,59 +20,82 @@ const gameState = {
 // Static file mgmt
 
 const app = express();
-app.use(express.static("./public"));
+app.use(express.static('./public'));
 app.listen(3000, () => {
-  console.log("Express server listening on 3000");
+  console.log('Express server listening on 3000');
 });
 
 // Websocket definition
+// TODO: possibly separate primarily incoming player WS from primarily outgoing view WS?
 const wss = new WebSocketServer({ port: 8080 });
 
 let viewClient = { id: null, ws: null };
 
-wss.on("connection", function connection(ws) {
-  console.log("new connection");
+wss.on('connection', function connection(ws) {
+  console.log('new connection');
   const id = uuid();
-  ws.on("error", console.error);
+  ws.on('error', console.error);
 
-  ws.on("close", function message() {
+  ws.on('close', function message() {
     if (id === viewClient.id) {
       viewClient = { id: null, ws: null };
     }
   });
 
-  ws.on("message", function message(data) {
+  ws.on('message', function message(data) {
     try {
       const json = JSON.parse(data);
       switch (json.type) {
-        case "initPlayer":
+        case 'initPlayer':
           addPlayer({ name: json.data.name, id });
-          viewClient.ws.send(JSON.stringify(gameState));
-          ws.send(JSON.stringify({ data: { id: id } }));
+          viewClient.ws.send(
+            JSON.stringify({
+              type: 'initPlayer',
+              player: gameState.players[id],
+            })
+          );
+          ws.send(JSON.stringify({ data: { id } }));
           break;
-        case "initView":
-          console.log("initView");
+        case 'initView':
+          console.log('initView');
           if (viewClient.id) {
-            console.log("view client already connected");
+            console.log('view client already connected');
             break;
           }
           viewClient = { id: id, ws: ws };
           gameState.nose.currentLocation = generateNose();
-          viewClient.ws.send(JSON.stringify(gameState));
+          viewClient.ws.send(
+            JSON.stringify({
+              type: 'initView',
+              gameState,
+            })
+          );
           break;
-        case "move":
+        case 'move':
           movePlayer({
             deltaX: json.data.direction.x,
             deltaY: json.data.direction.y,
             id: id,
           });
-          viewClient.ws.send(JSON.stringify(gameState));
+          viewClient.ws.send(
+            JSON.stringify({
+              type: 'move',
+              gameState,
+            })
+          );
           break;
         case "finish":
           gameState.players[json.data.id].isFinished = true;
           const loser = checkForLoser();
-          if (loser) gameState.loser = loser;
-          viewClient.ws.send(JSON.stringify(gameState));
+          if (loser) {
+            gameState.loser = loser;
+            viewClient.ws.send(
+              JSON.stringify({
+                type: 'loser',
+                gameState,
+              })
+            );
+          }
           break;
       }
     } catch (e) {
@@ -81,35 +104,49 @@ wss.on("connection", function connection(ws) {
   });
 });
 
+// adds player to global game state
 const addPlayer = ({ name, id }) => {
   if (!name || !id) {
-    console.log("invalid player");
+    console.log('invalid player');
     return;
   }
   console.log(id);
   gameState.players[id] = {
-    name: name,
+    id,
+    name,
     position: STARTING_POSITION,
     isFinished: false,
   };
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
-  let isMoving = deltaX && deltaY;
+  let isMoving = Boolean(deltaX && deltaY);
+
   let { x, y } = gameState.players[id].position;
-  x += deltaX * SPEED;
-  y += deltaY * SPEED;
+  console.log(`---- move ${id} ----`);
+  console.log(`ogpos: ${x} ${y}`);
+  console.log(`invec: ${deltaX} ${deltaY}`);
+  console.log(
+    `delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(
+      deltaY * SPEED
+    )}`
+  );
+
+  x += Math.floor(deltaX * SPEED);
+  y += Math.floor(deltaY * SPEED);
+
   if (x > X_BOUND || x < -10) {
     return;
   }
   if (y > Y_BOUND || y < -10) {
     return;
   }
+  console.log(`  out: ${x} ${y}`);
 
   gameState.players[id] = {
     ...gameState.players[id],
     position: { x, y },
-    isMoving: isMoving,
+    isMoving,
   };
 };
 

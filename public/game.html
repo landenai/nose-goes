@@ -1,116 +1,133 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script>
-    <script src="config.js"></script>
-  </head>
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script>
+  <script src="config.js"></script>
+</head>
+
 <body>
   <script>
 
     // ------- phaser painting -------- // 
-    class Example extends Phaser.Scene
-    {
-        constructor () {
-          super();
-          this.playerInstances = {};
-          this.winners = {};
-          this.nose = {};
-        }
+    class Example extends Phaser.Scene {
+      constructor() {
+        super();
+        this.playerInstances = {};
+        this.winners = {};
+        this.nose = {};
+      }
 
-        preload () {
-            this.load.path = 'assets/run/';
+      drawNose({ x, y }) {
+        this.nose = this.physics.add.image(x, y, 'nose');
+      }
 
-            this.load.image('run1', 'run1.png');
-            this.load.image('run2', 'run2.png');
-            this.load.image('run3', 'run3.png');
-            this.load.image('run4', 'run4.png');
+      checkForFinish() {
 
-            this.load.path = 'assets/idle/';
+      }
 
-            this.load.image('idle1', 'idle1.png');
-            this.load.image('idle2', 'idle2.png');
-            this.load.image('idle3', 'idle3.png');
-            this.load.image('idle4', 'idle4.png');
-            this.load.image('idle5', 'idle5.png');
+      handleWSMessage(message) {
+        try {
+          const event = JSON.parse(message.data);
 
-            this.load.path = 'assets/nose/';
-
-            this.load.svg('nose', 'nose.svg',{width: 100, height: 100})
-
-            this.socket = new WebSocket(CONFIG.websocketEndpoint);
-
-            this.socket.addEventListener("open", (event) => {
-               this.socket.send(JSON.stringify({ type: "initView" }));
-             });
-
-            this.socket.addEventListener("message", (event) => {
-              try {
-                const state = JSON.parse(event.data);
-                Object.keys(state.players).forEach(id => {
-                  const { position, isMoving } = state.players[id];
-
-                  if (!this.playerInstances[id]) {
-                    this.playerInstances[id] = this.playerInit();
-                  } else {
-                    // just move the player instance
-<<<<<<< HEAD
-                    console.log(this.playerInstances);
-                    if (isMoving) this.physics.moveTo(this.playerInstances[id], position.x, position.y);
-                    else this.playerInstances[id].body.reset(position.x, position.y);
-=======
-                    console.log(this.playerInstances[id].toJSON());
-                    if (isMoving) {
-                      this.physics.moveTo(
-                        this.playerInstances[id],
-                        position.x,
-                        position.y
-                      );
-                    } else this.playerInstances[id].body.reset(position.x, position.y);
->>>>>>> 242530bd9255e9dedd9b4203321f682dbda6f489
-                  }
-                });
-                if(state.nose) {
-                  this.drawNose(state.nose.currentLocation);
-                }
-                if(state.loser) {
-                  this.declareLoser(state.loser)
-                }
-              } catch (e) {
-                console.error('malformed game state!', e);
+          switch (event.type) {
+            case "initView":
+              // sent on first connection
+              // should paint everything
+              if (event.gameState.nose) {
+                this.drawNose(event.gameState.nose.currentLocation);
               }
-            });
+
+              Object.keys(event.gameState.players).forEach(id => {
+                this.playerInstances[id] = this.playerInit(event.gameState.players[id]);
+              });
+              break;
+            case "initPlayer":
+              // probably unneccessary check for non existence in game world
+              if (!this.playerInstances[event.player.id]) {
+                this.playerInstances[event.player.id] = this.playerInit(event.player);
+              }
+              break;
+            case "move":
+              // adjusts or resets every player (regardless of whether movement happened)
+              const { players } = event.gameState;
+              Object.keys(players).forEach(id => {
+                console.log(`player: ${JSON.stringify(players[id])}`);
+                const { position, isMoving } = players[id];
+
+                console.log(`moving to: ${JSON.stringify(position)}`);
+                // move the player instance
+                if (isMoving) {
+                  this.physics.moveTo(
+                    this.playerInstances[id],
+                    position.x,
+                    position.y,
+                    180, // speed (px/s), should be higher than ~2 * gameState SPEED / player.html refreshRate
+                  );
+                } else {
+                  this.playerInstances[id].body.reset(position.x, position.y);
+                }
+              });
+              break;
+            case "loser":
+              this.declareLoser(event.gameState.loser)
+              break;
+          }
+        } catch (e) {
+          console.error('malformed game state!', e);
         }
+      };
 
-        create() {
-          this.anims.create({
-              key: 'idle',
-                frames: [
-                    { key: 'idle1' },
-                    { key: 'idle2' },
-                    { key: 'idle3' },
-                    { key: 'idle4' },
-                    { key: 'idle5', duration: 100 }
-                   
-                ],
-                frameRate: 8,
-                repeat: -1
-            });
+      preload() {
+        this.load.path = 'assets/run/';
 
-            this.anims.create({
-                key: 'run',
-                frames: [
-                    { key: 'run1' },
-                    { key: 'run2' },
-                    { key: 'run3' },
-                    { key: 'run4', duration: 100 }
-                    
-                ],
-                frameRate: 8,
-                repeat: -1
-            });
-            // Player has reached nose
-            this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) =>
-        {
+        this.load.image('run1', 'run1.png');
+        this.load.image('run2', 'run2.png');
+        this.load.image('run3', 'run3.png');
+        this.load.image('run4', 'run4.png');
+
+        this.load.path = 'assets/idle/';
+
+        this.load.image('idle1', 'idle1.png');
+        this.load.image('idle2', 'idle2.png');
+        this.load.image('idle3', 'idle3.png');
+        this.load.image('idle4', 'idle4.png');
+        this.load.image('idle5', 'idle5.png');
+
+        this.load.path = 'assets/nose/';
+
+        this.load.svg('nose', 'nose.svg', { width: 100, height: 100 })
+      }
+
+      create() {
+        this.anims.create({
+          key: 'idle',
+          frames: [
+            { key: 'idle1' },
+            { key: 'idle2' },
+            { key: 'idle3' },
+            { key: 'idle4' },
+            { key: 'idle5', duration: 100 }
+
+          ],
+          frameRate: 8,
+          repeat: -1
+        });
+
+        this.anims.create({
+          key: 'run',
+          frames: [
+            { key: 'run1' },
+            { key: 'run2' },
+            { key: 'run3' },
+            { key: 'run4', duration: 100 }
+
+          ],
+          frameRate: 8,
+          repeat: -1
+        });
+
+        this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
            const playerId = Object.keys(this.playerInstances).find(key => this.playerInstances[key] === gameObject1);
            this.socket.send(JSON.stringify({
             type: "finish",
@@ -120,56 +137,62 @@
            }));
            gameObject1.disableBody();
         });
-        }
 
-        playerInit() {
-            const playerSprite = this.add.sprite(0, 0, 'run1').play('run');
-            playerSprite.setScale(1.2);
+        this.socket = new WebSocket(CONFIG.websocketEndpoint);
 
-            const playerContainer = this.add.container(400, 300, [playerSprite]);
-            this.physics.world.enableBody(playerContainer);
+        this.socket.addEventListener("open", (event) => {
+          this.socket.send(JSON.stringify({ type: "initView" }));
+        });
 
-            playerContainer.body.onOverlap = true;
-            this.physics.add.overlap(playerContainer, this.nose)
+        this.socket.addEventListener("message", (message) => this.handleWSMessage(message));
+      }
 
-            // add face towards top
-            let rnd = 'Binh' + Math.random();
-            this.load.image({
-              key: rnd,
-              url: 'https://api.dicebear.com/8.x/bottts/svg?seed=Mittens',
-            });
-            let scene = this;
+      playerInit({ name, position }) {
+        // create the player sprite and add it to a container
+        const playerSprite = this.add.sprite(0, 0, 'run1').play('run');
+        playerSprite.setScale(1.2);
+        const playerContainer = this.add.container(400, 300, [playerSprite]);
 
-            this.load.on(`filecomplete-image-${rnd}`, function (key, type, data) {
-              const face = scene.add.image(0, -20, rnd);
-              face.setScale(0.3);
-              playerContainer.add(face);
-            });
-            this.load.start();
+        // add physics to player container
+        this.physics.world.enableBody(playerContainer);
+        playerContainer.body.onOverlap = true;
+        this.physics.add.overlap(playerContainer, this.nose)
 
-            return playerContainer;
-        }
+        // download the player avatar
+        let rnd = name + Math.random();
+        this.load.image({
+          key: rnd,
+          url: `https://api.dicebear.com/8.x/bottts/svg?seed=${name}`,
+        });
 
-        drawNose({x,y}) {
-          this.nose = this.physics.add.image(x, y, 'nose');
-        }
+        const scene = this;
+        this.load.on(`filecomplete-image-${rnd}`, () => {
+          // add face towards top of container
+          const face = scene.add.image(0, -20, rnd);
+          face.setScale(0.3);
+          playerContainer.add(face);
+        });
+        this.load.start();
 
-        declareLoser(loser) {
-          const text = this.add.text(25, 250, `${loser} loses!`);
-        }
-      
+        console.log(`adding new player ${name}`);
+        return playerContainer;
+      }
+
+      declareLoser(loser) {
+        const text = this.add.text(25, 250, `${loser} loses!`);
+      }
     }
 
     const config = {
-        type: Phaser.AUTO,
-        parent: 'phaser-example',
-        width: 1280,
-        height: 700,
-        backgroundColor: '#fbf0e4',
-        physics: {
-          default: 'arcade',
-        },
-        scene: Example
+      type: Phaser.AUTO,
+      parent: 'phaser-example',
+      width: 1280,
+      height: 700,
+      backgroundColor: '#fbf0e4',
+      physics: {
+        default: 'arcade',
+      },
+      scene: Example
     };
 
     const game = new Phaser.Game(config);
@@ -178,4 +201,5 @@
 
 
 </body>
+
 </html>

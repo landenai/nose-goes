@@ -1,3 +1,4 @@
 const CONFIG = {
-  websocketEndpoint: "wss://1b2e-2602-fb65-0-100-30d0-62a7-227f-3446.ngrok-free.app",
+  websocketEndpoint: "wss://8de5-2603-7000-8500-2c8-bc50-e769-e3b0-ebc7.ngrok-free.app",
+  refreshRateMS: 50,
 };
