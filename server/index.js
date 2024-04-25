@@ -77,12 +77,6 @@ wss.on('connection', (ws) => {
             deltaY: json.data.direction.y,
             id,
           });
-          viewClient.ws.send(
-            JSON.stringify({
-              type: 'move',
-              gameState,
-            }),
-          );
           break;
         case 'finish':
           gameState.players[json.data.id].isFinished = true;
@@ -102,6 +96,20 @@ wss.on('connection', (ws) => {
       console.log(e);
     }
   });
+
+  const onTick = () => {
+    if (viewClient && viewClient.ws) {
+      viewClient.ws.send(
+        JSON.stringify({
+          type: 'move',
+          gameState,
+        }),
+      );
+    }
+    setTimeout(onTick, 10);
+  };
+
+  onTick();
 });
 
 // adds player to global game state
@@ -120,8 +128,6 @@ const addPlayer = ({ name, id }) => {
 };
 
 const movePlayer = ({ deltaX, deltaY, id }) => {
-  const isMoving = Boolean(deltaX && deltaY);
-
   let { x, y } = gameState.players[id].position;
   console.log(`---- move ${id} ----`);
   console.log(`ogpos: ${x} ${y}`);
@@ -146,7 +152,6 @@ const movePlayer = ({ deltaX, deltaY, id }) => {
   gameState.players[id] = {
     ...gameState.players[id],
     position: { x, y },
-    isMoving,
   };
 };
 

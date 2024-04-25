@@ -8,7 +8,7 @@
 
 <body>
   <script>
-    // ------- phaser painting -------- // 
+    // ------- phaser painting -------- //
     class Example extends Phaser.Scene {
       constructor() {
         super();
@@ -52,20 +52,10 @@
               const { players } = event.gameState;
               Object.keys(players).forEach(id => {
                 console.log(`player: ${JSON.stringify(players[id])}`);
-                const { position, isMoving } = players[id];
+                const { position } = players[id];
 
-                console.log(`moving to: ${JSON.stringify(position)}`);
                 // move the player instance
-                if (isMoving) {
-                  this.physics.moveTo(
-                    this.playerInstances[id],
-                    position.x,
-                    position.y,
-                    180, // speed (px/s), should be higher than ~2 * gameState SPEED / player.html refreshRate
-                  );
-                } else {
-                  this.playerInstances[id].body.reset(position.x, position.y);
-                }
+                this.playerInstances[id].setPosition(position.x, position.y);
               });
               break;
             case "loser":

@@ -92,21 +92,11 @@
   };
 
   // every x ms, send direction vector update
-  // `isMoving` acts as a toggle, indicating that the joystick
-  // has returned to a resting state
-  let isMoving = false;
   const onTick = () => {
     if (direction.x || direction.y) {
-      isMoving = true;
-
       let normalized = normalizeDirection(direction);
-     //  console.log(` direction: ${JSON.stringify(direction)}`);
-     //  console.log(`normalized: ${JSON.stringify(normalized)}`);
 
       socket.send(JSON.stringify({ type: "move", data: { direction: normalized } }));
-    } else if (isMoving) {
-      isMoving = false;
-      socket.send(JSON.stringify({ type: "move", data: { direction } }));
     }
     setTimeout(onTick, CONFIG.refreshRateMS);
   };
