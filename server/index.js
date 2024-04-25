@@ -72,14 +72,17 @@ wss.on('connection', (ws) => {
           );
           break;
         case 'move':
-          movePlayer({
-            deltaX: json.data.direction.x,
-            deltaY: json.data.direction.y,
-            id,
-          });
+          if (!gameState.players[id].isFinished) {
+            movePlayer({
+              deltaX: json.data.direction.x,
+              deltaY: json.data.direction.y,
+              id,
+            });
+          }
           break;
         case 'finish':
           gameState.players[json.data.id].isFinished = true;
+
           const loser = checkForLoser();
           if (loser) {
             gameState.loser = loser;

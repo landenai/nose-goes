@@ -56,6 +56,10 @@
 
                 // move the player instance
                 this.playerInstances[id].setPosition(position.x, position.y);
+
+                // TODO: future?
+                // add this position to a queue for this player
+                // let interpolation move them
               });
               break;
             case "loser":
@@ -124,7 +128,6 @@
               id: playerId,
             }
            }));
-           gameObject1.disableBody();
         });
 
         this.socket = new WebSocket(CONFIG.websocketEndpoint);
