@@ -1,4 +1,4 @@
 const CONFIG = {
-  websocketEndpoint: 'wss://a17b666663b9.ngrok.app',
+  websocketEndpoint: 'wss://nose-goes.fly.dev/',
   refreshRateMS: 50,
 };

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./server/index.js",
+    "start": "node ./server/index.js",
+    "watch": "nodemon ./server/index.js",
     "lint": "eslint ."
   },
   "author": "",
@@ -13,6 +14,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.2",
     "@eslint/js": "^9.1.1",
+    "@flydotio/dockerfile": "^0.5.6",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-html": "^8.1.0",
