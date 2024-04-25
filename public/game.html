@@ -51,7 +51,6 @@
               // adjusts or resets every player (regardless of whether movement happened)
               const { players } = event.gameState;
               Object.keys(players).forEach(id => {
-                console.log(`player: ${JSON.stringify(players[id])}`);
                 const { position } = players[id];
 
                 // move the player instance
@@ -63,7 +62,8 @@
               });
               break;
             case "loser":
-              this.declareLoser(event.gameState.loser)
+              console.log(`new loser: ${event.gameState.loserName}`);
+              this.declareLoser(event.gameState.loserName)
               break;
           }
         } catch (e) {
@@ -121,13 +121,18 @@
         });
 
         this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
-           const playerId = Object.keys(this.playerInstances).find(key => this.playerInstances[key] === gameObject1);
-           this.socket.send(JSON.stringify({
-            type: "finish",
-            data: {
-              id: playerId,
-            }
-           }));
+          if (!gameObject1.isFinished) {
+            gameObject1.isFinished = true;
+
+            console.log(`OVERLAP: ${JSON.stringify(gameObject1)}`);
+            console.log(`OVERLAP: ${gameObject1.playerId} collided`);
+            this.socket.send(JSON.stringify({
+              type: "finish",
+              data: {
+                id: gameObject1.playerId,
+              }
+            }));
+          }
         });
 
         this.socket = new WebSocket(CONFIG.websocketEndpoint);
@@ -139,11 +144,14 @@
         this.socket.addEventListener("message", (message) => this.handleWSMessage(message));
       }
 
-      playerInit({ name, position }) {
+      playerInit({ name, position, id }) {
+        console.log(`adding player w/ ID: ${id}`);
+
         // create the player sprite and add it to a container
         const playerSprite = this.add.sprite(0, 0, 'run1').play('run');
         playerSprite.setScale(1.2);
         const playerContainer = this.add.container(position.x, position.y, [playerSprite]);
+        playerContainer.playerId = id;
 
         // add physics to player container
         this.physics.world.enableBody(playerContainer);
@@ -170,8 +178,8 @@
         return playerContainer;
       }
 
-      declareLoser(loser) {
-        const text = this.add.text(25, 250, `${loser} loses!`);
+      declareLoser(name) {
+        const text = this.add.text(25, 250, `${name} loses!`);
       }
     }
 

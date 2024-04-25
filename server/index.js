@@ -14,7 +14,8 @@ const gameState = {
     previousLocation: {},
     currentLocation: {},
   },
-  loser: null,
+  loserName: null,
+  playersRemaining: 0,
 };
 
 // Static file mgmt
@@ -81,11 +82,17 @@ wss.on('connection', (ws) => {
           }
           break;
         case 'finish':
+          console.log(`finishing for ${JSON.stringify(json.data)}`);
+          console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
+          gameState.playersRemaining -= 1;
 
-          const loser = checkForLoser();
-          if (loser) {
-            gameState.loser = loser;
+          // TODO: some race condition?
+          if (gameState.playersRemaining <= 1) {
+            const loser = Object.values(gameState.players).filter((p) => !p.isFinished);
+            console.log(JSON.stringify(loser));
+            gameState.loserName = loser.name;
+
             viewClient.ws.send(
               JSON.stringify({
                 type: 'loser',
@@ -93,6 +100,7 @@ wss.on('connection', (ws) => {
               }),
             );
           }
+
           break;
       }
     } catch (e) {
@@ -181,16 +189,3 @@ const generateNewNose = () => {
 };
 
 const calculateDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-
-const checkForLoser = () => {
-  let loser = null;
-  for (const [id, player] of Object.entries(gameState.players)) {
-    if (player.isFinished) continue;
-    if (!loser) {
-      loser = null;
-      break;
-    }
-    loser = id;
-  }
-  return loser;
-};
