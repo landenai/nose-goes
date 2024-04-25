@@ -35,10 +35,10 @@ npm start
   - [x] Animate it
   - [ ] Make them distinguishable
 - [ ] Make it a game
-  - [ ] Start: Drop a nose randomly
+  - [x] Start: Drop a nose randomly
   - [ ] End: All players are on the nose
-  - [ ] Loser: last person to the nose => some sad animation?
-  - [ ] Winner: points?
+  - [x] Loser: last person to the nose => some sad animation?
+  - [x] Winner: points?
 - [ ] Testing setup
   - [ ] Script x number of players connecting and sending a bunch of calls to the service
   - [ ] Optimize for lag / paints / etc
@@ -47,8 +47,8 @@ npm start
   - [ ] Session recovery for players coming back
 - [ ] Websocket management
   - [ ] mitigate / handle mobile disconnects...somehow
-- [ ] Hosting
-  - [ ] host the game server somewhere
+- [x] Hosting
+  - [x] host the game server somewhere
 - [ ] Misc
   - [ ] color trails
   - [ ] a setting
