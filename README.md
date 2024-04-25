@@ -2,7 +2,7 @@
 
 A MMORPG (mini multiplayer online running player game) by @landenai and @binhrobles
 
-[View the field](https://landenai.github.io/nose-goes/game.html) or [drop in!](https://landenai.github.io/nose-goes/player.html)
+[View the field](https://landenai.github.io/nose-goes/public/game.html) or [drop in!](https://landenai.github.io/nose-goes/public/player.html)
 
 ## Current Gotchas
 
