@@ -124,7 +124,6 @@
           if (!gameObject1.isFinished) {
             gameObject1.isFinished = true;
 
-            console.log(`OVERLAP: ${JSON.stringify(gameObject1)}`);
             console.log(`OVERLAP: ${gameObject1.playerId} collided`);
             this.socket.send(JSON.stringify({
               type: "finish",
@@ -132,6 +131,8 @@
                 id: gameObject1.playerId,
               }
             }));
+
+
           }
         });
 
@@ -179,7 +180,15 @@
       }
 
       declareLoser(name) {
-        const text = this.add.text(25, 250, `${name} loses!`);
+        const text = this.add.text(25, 250, `${name} loses! 🐽`, {
+          fontSize: '25px',
+          color: '#000',
+        });
+      }
+
+      // TODO: some text box thingy
+      declareWinner(name) {
+        const text = this.add.text(25, 250, `${name} is safe!`);
       }
     }
 
