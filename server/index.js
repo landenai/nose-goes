@@ -82,15 +82,14 @@ wss.on('connection', (ws) => {
           }
           break;
         case 'finish':
-          console.log(`finishing for ${JSON.stringify(json.data)}`);
           console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
           gameState.playersRemaining -= 1;
 
           // TODO: some race condition?
           if (gameState.playersRemaining <= 1) {
-            const loser = Object.values(gameState.players).filter((p) => !p.isFinished);
-            console.log(JSON.stringify(loser));
+            const loser = Object.values(gameState.players).filter((p) => !p.isFinished)[0];
+            console.log(`LOSER: ${JSON.stringify(loser)}`);
             gameState.loserName = loser.name;
 
             viewClient.ws.send(
@@ -129,7 +128,9 @@ const addPlayer = ({ name, id }) => {
     console.log('invalid player');
     return;
   }
-  console.log(id);
+
+  gameState.playersRemaining += 1;
+
   gameState.players[id] = {
     id,
     name,
