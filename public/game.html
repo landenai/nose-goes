@@ -132,7 +132,7 @@
               }
             }));
 
-
+            this.declareWinner(gameObject1.playerId);
           }
         });
 
@@ -188,7 +188,12 @@
 
       // TODO: some text box thingy
       declareWinner(name) {
-        const text = this.add.text(25, 250, `${name} is safe!`);
+        const text = this.add.text(800, 250, `hardcode is safe!`, {
+          fontSize: '20px',
+          color: '#000',
+        });
+        this.physics.world.enableBody(text);
+        this.physics.moveTo(text, 800, -20);
       }
     }
 
