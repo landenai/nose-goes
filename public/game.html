@@ -72,6 +72,9 @@
       };
 
       preload() {
+
+        this.load.path = 'assets/'
+        this.load.image('qrCode', 'qr_code.png');
         this.load.path = 'assets/run/';
 
         this.load.image('run1', 'run1.png');
@@ -93,6 +96,8 @@
       }
 
       create() {
+        const qrCode = this.add.sprite(70, 70, 'qrCode');
+        qrCode.setScale(.5);
         this.anims.create({
           key: 'idle',
           frames: [
