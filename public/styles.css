@@ -26,7 +26,6 @@ body {
     flex: 2;
     align-self: center;
     display: flex;
-    align-items: center;
 }
 
 button {
