@@ -9,8 +9,8 @@ body {
 
 .title {
     flex: 1;
-    font-size: 9rem;
-    padding-top: 5rem;
+    font-size: 3rem;
+    padding-top: 2rem;
 }
 
 .player {
@@ -26,6 +26,10 @@ body {
     flex: 2;
     align-self: center;
     display: flex;
+}
+
+.name-container{
+    padding-top: 2rem;
 }
 
 button {

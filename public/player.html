@@ -8,12 +8,12 @@
 </head>
 
 <body>
-  <div class="title">👃🏽Nose Goes👃🏽</div>
+  <div class="title" id="title">👃🏽Nose Goes👃🏽</div>
   <div class="player">
     <img class="idle" id="player-image" src="assets/idle/idle1.png"/>
   </div>
   <div class="user-input">
-    <div class="name" id="name-container">
+    <div class="name-container" id="name-container">
       <input  class="name" id="name-input" type="text" oninput="onNameChange(this.value)" maxlength="20" placeholder="Who dis?"></input>
       <button onclick="onSubmit()">🐽</button>
     </div>
@@ -53,6 +53,7 @@
       direction.x = Number(stickData.x);
       direction.y = Number(-stickData.y);
     });
+    document.getElementById('title').innerText = 'Goes Nose!'
   }
   // Player state
   const direction = {
