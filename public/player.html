@@ -7,17 +7,17 @@
 </head>
 
 <body>
-  <div class="title">Nose Goes!</div>
+  <div class="title">👃🏽Nose Goes👃🏽</div>
   <div class="player">
     <img class="idle" id="player-image" src="assets/idle/idle1.png"/>
   </div>
   <div class="user-input">
-    <div class="name">
-      <input class="name" id="name-input" type="text" oninput="onNameChange(this.value)"></input>
-      <button onclick="onSubmit()">Submit</button>
+    <div class="name" id="name-container">
+      <input  class="name" id="name-input" type="text" oninput="onNameChange(this.value)" maxlength="20" placeholder="Who dis?"></input>
+      <button onclick="onSubmit()">🐽</button>
     </div>
     <div hidden id="joyDiv"
-      style="width:50vh;height:50vh;margin-bottom:20px; position: absolute; bottom:10vh; margin-left: auto; margin-right: auto; left: 0; right: 0">
+      style="width:50vh;height:50vh;margin-bottom:20px; bottom:10vh; margin-left: auto; margin-right: auto; left: 0; right: 0">
     </div>
   </div>
 
@@ -26,7 +26,6 @@
 
 
 <script>
-
   const socket = new WebSocket(CONFIG.websocketEndpoint);
   // handle server message
   // no current use
@@ -46,18 +45,19 @@
   const onSubmit = () => {
     const name = document.getElementById('name-input').value
     if(!name) return; 
+    document.getElementById('name-container').hidden = true;
     socket.send(JSON.stringify({ type: "initPlayer", data: { name } }));
+    document.getElementById('joyDiv').hidden = false;
+    new JoyStick('joyDiv', {}, (stickData) => {
+      direction.x = Number(stickData.x);
+      direction.y = Number(-stickData.y);
+    });
   }
   // Player state
   const direction = {
     x: 0,
     y: 0,
   };
-
-  const Joy1 = new JoyStick('joyDiv', {}, (stickData) => {
-    direction.x = Number(stickData.x);
-    direction.y = Number(-stickData.y);
-  });
 
 
   // assumes that x and y are non-zero (because of where it is invoked in `onTick()`
