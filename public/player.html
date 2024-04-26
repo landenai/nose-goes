@@ -5,6 +5,9 @@
   <script src="config.js"></script>
   <link rel="stylesheet" href="styles.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -39,6 +42,11 @@
     console.log("Connection closed: ", event.data);
   });
 
+  const nameField = document.getElementById('name-input'); 
+  nameField.addEventListener('keypress', (event) => {
+    if(event.key === "Enter") onSubmit();
+  });
+
   const onNameChange = (name) => {
     const img = document.getElementById('player-image');
     img.src = name ? `https://api.dicebear.com/8.x/bottts/svg?seed=${name}` : 'assets/idle/idle1.png';
@@ -49,7 +57,7 @@
     document.getElementById('name-container').hidden = true;
     socket.send(JSON.stringify({ type: "initPlayer", data: { name } }));
     document.getElementById('joyDiv').hidden = false;
-    new JoyStick('joyDiv', {}, (stickData) => {
+    new JoyStick('joyDiv', {internalFillColor: '#ef4444', internalStrokeColor: '#450a0a', externalStrokeColor: '#0a0a0a'}, (stickData) => {
       direction.x = Number(stickData.x);
       direction.y = Number(-stickData.y);
     });

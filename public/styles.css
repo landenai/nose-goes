@@ -1,3 +1,4 @@
+
 body {
     display: flex;
     flex-direction: column;
@@ -5,6 +6,8 @@ body {
     align-items: center;
     text-align: center;
     background-color: #86efac;
+    font-family: "Jersey 15", arial;
+
 }
 
 .title {
@@ -46,4 +49,5 @@ input {
     font-size: 2rem;
     border-radius: 1rem;
     padding: 1rem 1rem;
+    font-family: "Jersey 15", arial;
 }
