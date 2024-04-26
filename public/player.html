@@ -8,11 +8,13 @@
 
 <body>
   <div class="title">Nose Goes!</div>
-  <div class="player"></div>
+  <div class="player">
+    <img class="idle" id="player-image" src="assets/idle/idle1.png"/>
+  </div>
   <div class="user-input">
     <div class="name">
-      <input class="name" type="text" oninput="onNameChange(this.value)"></input>
-      <button>Submit</button>
+      <input class="name" id="name-input" type="text" oninput="onNameChange(this.value)"></input>
+      <button onclick="onSubmit()">Submit</button>
     </div>
     <div hidden id="joyDiv"
       style="width:50vh;height:50vh;margin-bottom:20px; position: absolute; bottom:10vh; margin-left: auto; margin-right: auto; left: 0; right: 0">
@@ -24,7 +26,13 @@
 
 <script>
   const onNameChange = (name) => {
-    console.log(name);
+    const img = document.getElementById('player-image');
+    img.src = name ? `https://api.dicebear.com/8.x/bottts/svg?seed=${name}` : 'assets/idle/idle1.png';
+  }
+  const onSubmit = () => {
+    const name = document.getElementById('name-input').value
+    if(!name) return;
+
   }
 </script>
 
