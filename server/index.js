@@ -7,6 +7,7 @@ const X_BOUND = 1245;
 const Y_BOUND = 650;
 const SPEED = 8;
 const MIN_DISTANCE = 200;
+const REFRESH_RATE_MS = 100;
 
 const gameState = {
   players: {},
@@ -116,7 +117,7 @@ wss.on('connection', (ws) => {
         }),
       );
     }
-    setTimeout(onTick, 10);
+    setTimeout(onTick, REFRESH_RATE_MS);
   };
 
   onTick();

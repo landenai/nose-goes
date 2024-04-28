@@ -42,7 +42,7 @@
     console.log("Connection closed: ", event.data);
   });
 
-  const nameField = document.getElementById('name-input'); 
+  const nameField = document.getElementById('name-input');
   nameField.addEventListener('keypress', (event) => {
     if(event.key === "Enter") onSubmit();
   });
@@ -53,9 +53,11 @@
   }
   const onSubmit = () => {
     const name = document.getElementById('name-input').value
-    if(!name) return; 
+    if(!name) return;
     document.getElementById('name-container').hidden = true;
+
     socket.send(JSON.stringify({ type: "initPlayer", data: { name } }));
+
     document.getElementById('joyDiv').hidden = false;
     new JoyStick('joyDiv', {internalFillColor: '#ef4444', internalStrokeColor: '#450a0a', externalStrokeColor: '#0a0a0a'}, (stickData) => {
       direction.x = Number(stickData.x);
