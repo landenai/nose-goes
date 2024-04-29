@@ -33,20 +33,14 @@ npm start
 - [ ] Cute little stick dudes
   - [x] Make / Add a sprite sheet
   - [x] Animate it
-  - [ ] Make them distinguishable
+  - [x] Make them distinguishable
 - [ ] Make it a game
   - [x] Start: Drop a nose randomly
   - [ ] End: All players are on the nose
   - [x] Loser: last person to the nose => some sad animation?
   - [x] Winner: points?
-- [ ] Testing setup
-  - [ ] Script x number of players connecting and sending a bunch of calls to the service
-  - [ ] Optimize for lag / paints / etc
-- [ ] Player lifecycle management
-  - [ ] Graveyard for disconnected players
-  - [ ] Session recovery for players coming back
 - [ ] Websocket management
-  - [ ] mitigate / handle mobile disconnects...somehow
+  - [ ] drop player on disconnect
 - [x] Hosting
   - [x] host the game server somewhere
 - [ ] Misc
