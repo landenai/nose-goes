@@ -71,22 +71,10 @@
     y: 0,
   };
 
-
-  // assumes that x and y are non-zero (because of where it is invoked in `onTick()`
-  const normalizeDirection = ({ x, y }) => {
-    let magnitude = 1 / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    return {
-      x: x * magnitude,
-      y: y * magnitude,
-    };
-  };
-
   // every x ms, send direction vector update
   const onTick = () => {
     if (direction.x || direction.y) {
-      let normalized = normalizeDirection(direction);
-
-      socket.send(JSON.stringify({ type: "move", data: { direction: normalized } }));
+      socket.send(JSON.stringify({ type: "move", data: { direction } }));
     }
     setTimeout(onTick, CONFIG.refreshRateMS);
   };

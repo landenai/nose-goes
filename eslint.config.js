@@ -14,11 +14,16 @@ const compat = new FlatCompat({
 });
 
 export default [
+  ...compat.config({
+    extends: ['airbnb-base'],
+    rules: {
+      'no-console': 'off',
+    },
+    ignorePatterns: ['**/joy.js', '*.config.js'],
+  }),
   {
-    ignores: ['joy.js'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },
     },
   },
-  ...compat.extends('airbnb-base'),
 ];
