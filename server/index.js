@@ -15,7 +15,6 @@ const gameState = {
     previousLocation: {},
     currentLocation: {},
   },
-  loserName: null,
   playersRemaining: 0,
 };
 
@@ -139,6 +138,7 @@ wss.on('connection', (ws) => {
           );
           ws.send(JSON.stringify({ data: { id } }));
           break;
+
         case 'initView':
           console.log('initView');
           if (viewClient.id) {
@@ -154,6 +154,7 @@ wss.on('connection', (ws) => {
             }),
           );
           break;
+
         case 'move':
           if (!gameState.players[id].isFinished) {
             movePlayer({
@@ -163,6 +164,7 @@ wss.on('connection', (ws) => {
             });
           }
           break;
+
         case 'finish':
           console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
@@ -172,12 +174,11 @@ wss.on('connection', (ws) => {
           if (gameState.playersRemaining <= 1) {
             const loser = Object.values(gameState.players).filter((p) => !p.isFinished)[0];
             console.log(`LOSER: ${JSON.stringify(loser)}`);
-            gameState.loserName = loser.name;
 
             viewClient.ws.send(
               JSON.stringify({
                 type: 'loser',
-                gameState,
+                id: loser.id,
               }),
             );
           }

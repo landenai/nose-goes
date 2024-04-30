@@ -62,8 +62,9 @@
               });
               break;
             case "loser":
-              console.log(`new loser: ${event.gameState.loserName}`);
-              this.declareLoser(event.gameState.loserName)
+              const loser = this.playerInstances[event.id];
+              console.log(`new loser: ${loser.name}`);
+              this.declareLoser(loser.name)
               break;
           }
         } catch (e) {
@@ -158,6 +159,7 @@
         playerSprite.setScale(1.2);
         const playerContainer = this.add.container(position.x, position.y, [playerSprite]);
         playerContainer.playerId = id;
+        playerContainer.name = name;
 
         // add physics to player container
         this.physics.world.enableBody(playerContainer);
