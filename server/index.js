@@ -182,6 +182,14 @@ wss.on("connection", (ws) => {
                 nextNoseLocation: generateNewNose(),
               }),
             );
+            gameState.nose.previousLocation = gameState.nose.currentLocation;
+            gameState.nose.currentLocation = generateNewNose();
+            viewClient.ws.send(
+              JSON.stringify({
+                type: "initView",
+                gameState,
+              })
+            );
           }
 
           break;
