@@ -52,8 +52,6 @@
               const { players } = event.gameState;
               Object.keys(players).forEach(id => {
                 const { position } = players[id];
-                console.log("looking for " + id)
-                console.log(this.playerInstances);
                 // move the player instance
                 this.playerInstances[id].setPosition(position.x, position.y);
 
