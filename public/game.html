@@ -59,7 +59,7 @@
             countdownLabel.destroy();
             countdownDigit.destroy();
 
-            this.newGame(nextNoseLocation);
+            this.handleNewGame(nextNoseLocation);
           }
         };
 
@@ -67,7 +67,7 @@
 
       }
 
-      newGame(noseLocation) {
+      handleNewGame(noseLocation) {
         // TODO: re-enable all players (w/ jitter?)
 
         // render the new nose
