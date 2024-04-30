@@ -2,7 +2,7 @@ import { WebSocketServer } from "ws";
 import { v4 as uuid } from "uuid";
 import express from "express";
 
-const STARTING_POSITION = { x: 640, y: 350 };
+const STARTING_POSITION = { x: 200, y: 80 };
 const X_BOUND = 1245;
 const Y_BOUND = 650;
 const SPEED = 8;

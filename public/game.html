@@ -53,7 +53,8 @@
               const { players } = event.gameState;
               Object.keys(players).forEach(id => {
                 const { position } = players[id];
-
+                console.log("looking for " + id)
+                console.log(this.playerInstances);
                 // move the player instance
                 this.playerInstances[id].setPosition(position.x, position.y);
 
@@ -77,6 +78,8 @@
 
         this.load.path = 'assets/'
         this.load.image('qrCode', 'qr_code.png');
+        this.load.image('spawnPoint', 'spawn_point.png');
+
         this.load.path = 'assets/run/';
 
         this.load.image('run1', 'run1.png');
@@ -100,6 +103,11 @@
       create() {
         const qrCode = this.add.sprite(70, 70, 'qrCode');
         qrCode.setScale(.5);
+
+        const spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
+        spawnPoint.setScale(.25);
+
+
         this.anims.create({
           key: 'idle',
           frames: [
