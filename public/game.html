@@ -9,20 +9,61 @@
 <body>
   <script>
     // ------- phaser painting -------- //
-    class Example extends Phaser.Scene {
+    class NoseGoes extends Phaser.Scene {
       constructor() {
         super();
         this.playerInstances = {};
         this.winners = {};
-        this.nose = {};
+        this.noseLocation = {}; // TODO: get this from server in `loser` message
+        this.noseInstance = {}; // TODO: turn off visibility at game over
+      }
+
+      handleGameOver(name) {
+        const text = this.add.text(0, 0, `${name} loses! 🐽`, {
+          fontSize: '25px',
+          color: '#000',
+        });
+        text.setOrigin(0.5, 0.2); // center-top
+        this.removeNose();
+      }
+
+      // show a countdown timer and kick off the next game
+      handleIntermission(loserText) {
+        // display a countdown timer
+        let secondsLeft = 10;
+        const countdownString = `New Round\nstarts in\n${secondsLeft}`;
+        const countdownText = this.add.text(0, 0, countdownString);
+        countdownText.setOrigin(0.5, 0.5); // center-center
+
+        const decrementCountdown = () => {
+          secondsLeft -= 1;
+          countdownText.setText(countdownString);
+
+          if (secondsLeft <= 0) {
+            this.newGame();
+          } else {
+            setTimeout(decrementCountdown, 1000);
+          }
+        };
+
+        setTimeout(decrementCountdown, 1000);
+
+      }
+
+      newGame() {
+        // re-enable all players (w/ jitter?)
+        // render the new nose
+        drawNose(this.nose);
+
+        // reset state
       }
 
       drawNose({ x, y }) {
-        this.nose = this.physics.add.image(x, y, 'nose');
+        this.noseInstance = this.physics.add.image(x, y, 'nose');
       }
 
-      checkForFinish() {
-
+      removeNose() {
+        this.noseInstance.destroy();
       }
 
       handleWSMessage(message) {
@@ -63,7 +104,10 @@
             case "loser":
               const loser = this.playerInstances[event.id];
               console.log(`new loser: ${loser.name}`);
-              this.declareLoser(loser.name)
+
+              const loserText = this.handleGameOver(loser.name);
+              this.handleIntermission(loserText);
+
               break;
           }
         } catch (e) {
@@ -103,7 +147,6 @@
 
         const spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
         spawnPoint.setScale(.25);
-
 
         this.anims.create({
           key: 'idle',
@@ -170,7 +213,7 @@
         // add physics to player container
         this.physics.world.enableBody(playerContainer);
         playerContainer.body.onOverlap = true;
-        this.physics.add.overlap(playerContainer, this.nose)
+        this.physics.add.overlap(playerContainer, this.noseInstance)
 
         // download the player avatar
         let rnd = name + Math.random();
@@ -190,13 +233,6 @@
 
         console.log(`adding new player ${name}`);
         return playerContainer;
-      }
-
-      declareLoser(name) {
-        const text = this.add.text(25, 250, `${name} loses! 🐽`, {
-          fontSize: '25px',
-          color: '#000',
-        });
       }
 
       declareSafe(name) {
@@ -223,7 +259,7 @@
       physics: {
         default: 'arcade',
       },
-      scene: Example
+      scene: NoseGoes
     };
 
     const game = new Phaser.Game(config);
