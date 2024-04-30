@@ -8,41 +8,57 @@
 
 <body>
   <script>
+    const VIEW_WIDTH = 1280;
+    const VIEW_HEIGHT = 700;
+
     // ------- phaser painting -------- //
     class NoseGoes extends Phaser.Scene {
       constructor() {
         super();
         this.playerInstances = {};
         this.winners = {};
-        this.noseLocation = {}; // TODO: get this from server in `loser` message
-        this.noseInstance = {}; // TODO: turn off visibility at game over
+        this.noseInstance = null;
       }
 
       handleGameOver(name) {
-        const text = this.add.text(0, 0, `${name} loses! 🐽`, {
-          fontSize: '25px',
+        const loserText = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 4, `${name} loses! 🐽`, {
+          fontSize: '30px',
           color: '#000',
         });
-        text.setOrigin(0.5, 0.2); // center-top
+        loserText.setOrigin(0.5, 0.5);
         this.removeNose();
+        return loserText;
       }
 
       // show a countdown timer and kick off the next game
-      handleIntermission(loserText) {
+      handleIntermission(loserText, nextNoseLocation) {
         // display a countdown timer
+        const countdownLabel = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 3, 'New Round\nstarts in', {
+          fontSize: '25px',
+          color: '#000',
+        });
+        countdownLabel.setOrigin(0.5, 0.5);
+
         let secondsLeft = 10;
-        const countdownString = `New Round\nstarts in\n${secondsLeft}`;
-        const countdownText = this.add.text(0, 0, countdownString);
-        countdownText.setOrigin(0.5, 0.5); // center-center
+        const countdownDigit = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 2) + 30, secondsLeft.toString(), {
+          fontSize: '75px',
+          color: '#e11',
+        });
+        countdownDigit.setOrigin(0.5, 0.5);
 
         const decrementCountdown = () => {
           secondsLeft -= 1;
-          countdownText.setText(countdownString);
+          countdownDigit.setText(secondsLeft.toString());
 
-          if (secondsLeft <= 0) {
-            this.newGame();
-          } else {
+          if (secondsLeft > 0) {
             setTimeout(decrementCountdown, 1000);
+          } else {
+            // when countdown hits 0, clear the screen and kick off the next game
+            loserText.destroy();
+            countdownLabel.destroy();
+            countdownDigit.destroy();
+
+            this.newGame(nextNoseLocation);
           }
         };
 
@@ -50,20 +66,27 @@
 
       }
 
-      newGame() {
-        // re-enable all players (w/ jitter?)
-        // render the new nose
-        drawNose(this.nose);
+      newGame(noseLocation) {
+        // TODO: re-enable all players (w/ jitter?)
 
-        // reset state
+        // render the new nose
+        this.drawNose(noseLocation);
+
+        // TODO: reset game state
       }
 
       drawNose({ x, y }) {
-        this.noseInstance = this.physics.add.image(x, y, 'nose');
+        if (!this.noseInstance) {
+          this.noseInstance = this.physics.add.image(x, y, 'nose');
+        } else {
+          this.noseInstance.setPosition(x, y);
+        }
+
+        this.noseInstance.setVisible(true);
       }
 
       removeNose() {
-        this.noseInstance.destroy();
+        this.noseInstance.setVisible(false);
       }
 
       handleWSMessage(message) {
@@ -102,11 +125,12 @@
               });
               break;
             case "loser":
-              const loser = this.playerInstances[event.id];
+              const { playerId, nextNoseLocation } = event;
+              const loser = this.playerInstances[playerId];
               console.log(`new loser: ${loser.name}`);
 
               const loserText = this.handleGameOver(loser.name);
-              this.handleIntermission(loserText);
+              this.handleIntermission(loserText, nextNoseLocation);
 
               break;
           }
@@ -253,8 +277,8 @@
     const config = {
       type: Phaser.AUTO,
       parent: 'phaser-example',
-      width: 1280,
-      height: 700,
+      width: VIEW_WIDTH,
+      height: VIEW_HEIGHT,
       backgroundColor: '#fbf0e4',
       physics: {
         default: 'arcade',
