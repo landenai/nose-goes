@@ -133,24 +133,19 @@
           repeat: -1
         });
 
-        this.physics.world.on('overlap', (gameObject1, gameObject2, body1, body2) => {
-          if (!gameObject1.isFinished) {
-            gameObject1.isFinished = true;
-            console.log("OVERLAP:", gameObject1);
+        this.physics.world.on('overlap', (playerContainer, _gameObject2, _body1, _body2) => {
+          if (!playerContainer.isFinished) {
+            playerContainer.isFinished = true;
+
+            console.log(`OVERLAP: ${playerContainer.playerId} collided`);
             this.socket.send(JSON.stringify({
               type: "finish",
               data: {
-                id: gameObject1.playerId,
+                id: playerContainer.playerId,
               }
             }));
 
-            this.declareWinner(gameObject1.name);
-            gameObject1.visible = false;
-            confetti({
-              particleCount: 100,
-              spread: 30,
-              origin: { x: (gameObject1.x + 80)/1280, y: gameObject1.y/700 }
-            });
+            this.declareSafe(playerContainer.name);
           }
         });
 
@@ -205,14 +200,18 @@
         });
       }
 
-      // TODO: some text box thingy
-      declareWinner(name) {
-        const text = this.add.text(800, 250, `${name} is safe!`, {
+      declareSafe(name) {
+        // get random px b/w 750 and 850
+        const WIN_MAX = 850;
+        const WIN_MIN = 750;
+        const xPos = Math.random() * (WIN_MAX - WIN_MIN) + WIN_MAX;
+
+        const text = this.add.text(xPos, 250, `${name} is safe!`, {
           fontSize: '20px',
           color: '#000',
         });
         this.physics.world.enableBody(text);
-        this.physics.moveTo(text, 800, -20);
+        this.physics.moveTo(text, xPos, -20);
       }
     }
 
