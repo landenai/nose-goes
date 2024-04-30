@@ -213,6 +213,12 @@
             }));
 
             this.declareSafe(playerContainer.name);
+            playerContainer.visible = false;
+            confetti({
+              particleCount: 100,
+              spread: 30,
+              origin: { x: (playerContainer.x + 80) / 1280, y: playerContainer.y / 700 }
+            });
           }
         });
 
