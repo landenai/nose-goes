@@ -75,8 +75,6 @@
         };
 
         setTimeout(decrementCountdown, 1000);
-
-        // TODO: reset game state
       }
 
       drawNose({ x, y }) {
@@ -94,19 +92,19 @@
       }
 
       handleNewGame(noseLocation, previousNoseLocation) {
-        // TODO: re-enable all players (w/ jitter?)
         // render the new nose
         this.drawNose(noseLocation);
+
+        // reset game state
         this.socket.send(JSON.stringify({
           type: 'reset',
         }));
+
+        // re-enable all players (w/ jitter?)
         for (const [_, playerContainer] of Object.entries(this.playerInstances)) {
           playerContainer.visible = true;
           playerContainer.isFinished = false;
         }
-
-
-        // TODO: reset game state
       }
 
       drawNose({ x, y }) {
@@ -145,6 +143,11 @@
                 this.playerInstances[event.player.id] = this.playerInit(event.player);
               }
               break;
+            case "removePlayer":
+              if (this.playerInstances[event.playerId]) {
+                delete this.playerInstances[event.playerId];
+              }
+              break;
             case "move":
               // adjusts or resets every player (regardless of whether movement happened)
               const { players } = event.gameState;
@@ -166,8 +169,6 @@
 
               const loserTextArr = this.handleGameOver(loserContainer.name);
               this.handleIntermission(loserTextArr, nextNoseLocation, previousNoseLocation);
-
-
               break;
           }
         } catch (e) {
@@ -265,6 +266,7 @@
         });
 
         this.socket.addEventListener("message", (message) => this.handleWSMessage(message));
+
       }
 
       playerInit({ name, position, id }) {
@@ -330,10 +332,7 @@
     };
 
     const game = new Phaser.Game(config);
-
   </script>
-
-
 </body>
 
 </html>
