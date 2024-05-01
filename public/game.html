@@ -19,6 +19,7 @@
         this.playerInstances = {};
         this.winners = {};
         this.noseInstance = null;
+        this.spawnPoint = null;
       }
 
       handleGameOver(name) {
@@ -32,7 +33,7 @@
       }
 
       // show a countdown timer and kick off the next game
-      handleIntermission(loserText, nextNoseLocation) {
+      handleIntermission(loserText, nextNoseLocation, previousNoseLocation) {
         // display a countdown timer
         const countdownLabel = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 3, 'New Round\nstarts in', {
           fontSize: '25px',
@@ -40,12 +41,15 @@
         });
         countdownLabel.setOrigin(0.5, 0.5);
 
+
         let secondsLeft = 10;
         const countdownDigit = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 2) + 30, secondsLeft.toString(), {
           fontSize: '75px',
           color: '#e11',
         });
         countdownDigit.setOrigin(0.5, 0.5);
+
+        this.spawnPoint.setPosition(previousNoseLocation.x, previousNoseLocation.y);
 
         const decrementCountdown = () => {
           secondsLeft -= 1;
@@ -59,7 +63,7 @@
             countdownLabel.destroy();
             countdownDigit.destroy();
 
-            this.handleNewGame(nextNoseLocation);
+            this.handleNewGame(nextNoseLocation, previousNoseLocation);
           }
         };
 
@@ -67,11 +71,17 @@
 
       }
 
-      handleNewGame(noseLocation) {
+      handleNewGame(noseLocation, previousNoseLocation) {
         // TODO: re-enable all players (w/ jitter?)
-
         // render the new nose
         this.drawNose(noseLocation);
+        this.socket.send(JSON.stringify({
+          type: 'reset',
+        }));
+        for (const [_, playerContainer] of Object.entries(this.playerInstances)) {
+          playerContainer.visible = true;
+        }
+
 
         // TODO: reset game state
       }
@@ -126,12 +136,12 @@
               });
               break;
             case "loser":
-              const { playerId, nextNoseLocation } = event;
+              const { playerId, nextNoseLocation, previousNoseLocation } = event;
               const loser = this.playerInstances[playerId];
               console.log(`new loser: ${loser.name}`);
 
               const loserText = this.handleGameOver(loser.name);
-              this.handleIntermission(loserText, nextNoseLocation);
+              this.handleIntermission(loserText, nextNoseLocation, previousNoseLocation);
 
               break;
           }
@@ -171,8 +181,8 @@
         const qrCode = this.add.sprite(70, 70, 'qrCode');
         qrCode.setScale(.5);
 
-        const spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
-        spawnPoint.setScale(.25);
+        this.spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
+        this.spawnPoint.setScale(.25);
 
         this.anims.create({
           key: 'idle',

@@ -175,24 +175,30 @@ wss.on("connection", (ws) => {
             )[0];
             console.log(`LOSER: ${JSON.stringify(loser)}`);
 
+            
+            gameState.nose = {previousLocation: gameState.nose.currentLocation, currentLocation: generateNewNose()}
             viewClient.ws.send(
               JSON.stringify({
                 type: 'loser',
                 playerId: loser.id,
-                nextNoseLocation: generateNewNose(),
+                previousNoseLocation: gameState.nose.previousLocation,
+                nextNoseLocation: gameState.nose.currentLocation,
               }),
             );
-            gameState.nose.previousLocation = gameState.nose.currentLocation;
-            gameState.nose.currentLocation = generateNewNose();
-            viewClient.ws.send(
-              JSON.stringify({
-                type: "initView",
-                gameState,
-              })
-            );
+  
           }
-
           break;
+        case 'reset':
+          let xJitter;
+          let yJitter;
+          for(const[_,player] of Object.entries(gameState.players)) {
+            xJitter= Math.random() * (10) - 5;
+            yJitter= Math.random() * (10) - 5;
+            player.position = {x: gameState.nose.previousLocation.x + xJitter, y: gameState.nose.previousLocation.y + yJitter}
+            player.isFinished = false;
+          }
+          gameState.playersRemaining = gameState.players.length
+          console.log(gameState);
         default:
           console.log(`unexpected message type: ${json.type}`);
       }
