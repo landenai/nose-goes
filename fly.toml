@@ -19,6 +19,5 @@ primary_region = 'iad'
     port = 443
 
 [[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
-  cpus = 1
+  # size = "shared-cpu-1x"
+  size = "shared-cpu-4x"
