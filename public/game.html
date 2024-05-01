@@ -20,12 +20,13 @@
         this.winners = {};
         this.noseInstance = null;
         this.spawnPoint = null;
+        this.dunceCap = null;
       }
 
-      handleGameOver(name) {
+      handleGameOver(loserContainer) {
         this.removeNose();
 
-        const nameText = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 4) - 20, `${name}`, {
+        const nameText = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 4) - 20, `${loserContainer.name}`, {
           fontSize: '30px',
           color: '#e11',
         });
@@ -33,6 +34,11 @@
           fontSize: '30px',
           color: '#000',
         });
+        if (this.dunceCap) this.dunceCap.destroy();
+        this.dunceCap = this.add.image(10, -45, 'dunceCap')
+        this.dunceCap.setAngle(15);
+        this.dunceCap.setScale(0.05);
+        loserContainer.add(this.dunceCap);
         nameText.setOrigin(0.5, 0.5);
         loserText.setOrigin(0.5, 0.5);
 
@@ -167,7 +173,7 @@
               loserContainer.isFinished = true; // disable movement
               console.log(`new loser: ${loserContainer.name}`);
 
-              const loserTextArr = this.handleGameOver(loserContainer.name);
+              const loserTextArr = this.handleGameOver(loserContainer);
               this.handleIntermission(loserTextArr, nextNoseLocation, previousNoseLocation);
               break;
           }
@@ -181,6 +187,7 @@
         this.load.path = 'assets/'
         this.load.image('qrCode', 'qr_code.png');
         this.load.image('spawnPoint', 'spawn_point.png');
+        this.load.svg('dunceCap', 'dunce.svg')
 
         this.load.path = 'assets/run/';
 
@@ -243,7 +250,7 @@
 
             console.log(`OVERLAP: ${playerContainer.playerId} collided`);
             this.socket.send(JSON.stringify({
-              type: "finish",
+              type: 'finish',
               data: {
                 id: playerContainer.playerId,
               }
@@ -299,7 +306,6 @@
           playerContainer.add(face);
         });
         this.load.start();
-
         console.log(`adding new player ${name}`);
         return playerContainer;
       }
