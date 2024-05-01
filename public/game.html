@@ -7,6 +7,7 @@
 </head>
 
 <body>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script>
     const VIEW_WIDTH = 1280;
     const VIEW_HEIGHT = 700;
@@ -18,6 +19,7 @@
         this.playerInstances = {};
         this.winners = {};
         this.noseInstance = null;
+        this.spawnPoint = null;
       }
 
       handleGameOver(name) {
@@ -28,10 +30,11 @@
         loserText.setOrigin(0.5, 0.5);
         this.removeNose();
         return loserText;
+
       }
 
       // show a countdown timer and kick off the next game
-      handleIntermission(loserText, nextNoseLocation) {
+      handleIntermission(loserText, nextNoseLocation, previousNoseLocation) {
         // display a countdown timer
         const countdownLabel = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 3, 'New Round\nstarts in', {
           fontSize: '25px',
@@ -39,12 +42,15 @@
         });
         countdownLabel.setOrigin(0.5, 0.5);
 
+
         let secondsLeft = 10;
         const countdownDigit = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 2) + 30, secondsLeft.toString(), {
           fontSize: '75px',
           color: '#e11',
         });
         countdownDigit.setOrigin(0.5, 0.5);
+
+        this.spawnPoint.setPosition(previousNoseLocation.x, previousNoseLocation.y);
 
         const decrementCountdown = () => {
           secondsLeft -= 1;
@@ -58,19 +64,41 @@
             countdownLabel.destroy();
             countdownDigit.destroy();
 
-            this.handleNewGame(nextNoseLocation);
+            this.handleNewGame(nextNoseLocation, previousNoseLocation);
           }
         };
 
         setTimeout(decrementCountdown, 1000);
 
+        // TODO: reset game state
       }
 
-      handleNewGame(noseLocation) {
-        // TODO: re-enable all players (w/ jitter?)
+      drawNose({ x, y }) {
+        if (!this.noseInstance) {
+          this.noseInstance = this.physics.add.image(x, y, 'nose');
+        } else {
+          this.noseInstance.setPosition(x, y);
+        }
 
+        this.noseInstance.setVisible(true);
+      }
+
+      removeNose() {
+        this.noseInstance.setVisible(false);
+      }
+
+      handleNewGame(noseLocation, previousNoseLocation) {
+        // TODO: re-enable all players (w/ jitter?)
         // render the new nose
         this.drawNose(noseLocation);
+        this.socket.send(JSON.stringify({
+          type: 'reset',
+        }));
+        for (const [_, playerContainer] of Object.entries(this.playerInstances)) {
+          playerContainer.visible = true;
+          playerContainer.isFinished = false;
+        }
+
 
         // TODO: reset game state
       }
@@ -125,12 +153,13 @@
               });
               break;
             case "loser":
-              const { playerId, nextNoseLocation } = event;
+              const { playerId, nextNoseLocation, previousNoseLocation } = event;
               const loser = this.playerInstances[playerId];
               console.log(`new loser: ${loser.name}`);
 
               const loserText = this.handleGameOver(loser.name);
-              this.handleIntermission(loserText, nextNoseLocation);
+              this.handleIntermission(loserText, nextNoseLocation, previousNoseLocation);
+
 
               break;
           }
@@ -163,14 +192,15 @@
         this.load.path = 'assets/nose/';
 
         this.load.svg('nose', 'nose.svg', { width: 100, height: 100 })
+
       }
 
       create() {
         const qrCode = this.add.sprite(70, 70, 'qrCode');
         qrCode.setScale(.5);
 
-        const spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
-        spawnPoint.setScale(.25);
+        this.spawnPoint = this.add.sprite(200, 50, 'spawnPoint');
+        this.spawnPoint.setScale(.25);
 
         this.anims.create({
           key: 'idle',
@@ -212,6 +242,12 @@
             }));
 
             this.declareSafe(playerContainer.name);
+            playerContainer.visible = false;
+            confetti({
+              particleCount: 100,
+              spread: 30,
+              origin: { x: (playerContainer.x + 80) / 1280, y: playerContainer.y / 700 }
+            });
           }
         });
 
