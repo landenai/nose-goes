@@ -30,6 +30,7 @@
         loserText.setOrigin(0.5, 0.5);
         this.removeNose();
         return loserText;
+
       }
 
       // show a countdown timer and kick off the next game
@@ -69,6 +70,21 @@
 
         setTimeout(decrementCountdown, 1000);
 
+        // TODO: reset game state
+      }
+
+      drawNose({ x, y }) {
+        if (!this.noseInstance) {
+          this.noseInstance = this.physics.add.image(x, y, 'nose');
+        } else {
+          this.noseInstance.setPosition(x, y);
+        }
+
+        this.noseInstance.setVisible(true);
+      }
+
+      removeNose() {
+        this.noseInstance.setVisible(false);
       }
 
       handleNewGame(noseLocation, previousNoseLocation) {
@@ -143,6 +159,7 @@
 
               const loserText = this.handleGameOver(loser.name);
               this.handleIntermission(loserText, nextNoseLocation, previousNoseLocation);
+
 
               break;
           }
