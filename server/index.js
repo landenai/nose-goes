@@ -3,8 +3,10 @@ import { v4 as uuid } from "uuid";
 import express from "express";
 
 const STARTING_POSITION = { x: 200, y: 80 };
-const X_BOUND = 1245;
-const Y_BOUND = 650;
+const X_LOWER_BOUND = 20;
+const X_UPPER_BOUND = 1260;
+const Y_UPPER_BOUND = 680;
+const Y_LOWER_BOUND = 40;
 const SPEED = 8;
 const MIN_DISTANCE = 200;
 const REFRESH_RATE_MS = 100;
@@ -73,10 +75,10 @@ const movePlayer = ({ vecX, vecY, id }) => {
   posX += Math.floor(deltaX * SPEED);
   posY += Math.floor(deltaY * SPEED);
 
-  if (posX > X_BOUND || posX < -10) {
+  if (posX > X_UPPER_BOUND || posX < X_LOWER_BOUND) {
     return;
   }
-  if (posY > Y_BOUND || posY < -10) {
+  if (posY > Y_UPPER_BOUND || posY < Y_LOWER_BOUND) {
     return;
   }
 
@@ -87,8 +89,9 @@ const movePlayer = ({ vecX, vecY, id }) => {
 };
 
 const generateNose = () => {
-  const x = Math.floor(Math.random() * X_BOUND);
-  const y = Math.floor(Math.random() * Y_BOUND);
+  const x = Math.floor(Math.random() * X_UPPER_BOUND + X_LOWER_BOUND);
+  const y = Math.floor(Math.random() * Y_UPPER_BOUND + Y_LOWER_BOUND);
+  if(x <= 350 && y <= 200) return generateNose();
   return { x, y };
 };
 
