@@ -1,6 +1,6 @@
-import { WebSocketServer } from "ws";
-import { v4 as uuid } from "uuid";
-import express from "express";
+import { WebSocketServer } from 'ws';
+import { v4 as uuid } from 'uuid';
+import express from 'express';
 
 const STARTING_POSITION = { x: 200, y: 80 };
 const X_LOWER_BOUND = 20;
@@ -23,23 +23,23 @@ const gameState = {
 // Static file mgmt
 
 const app = express();
-app.use(express.static("./public"));
+app.use(express.static('./public'));
 app.listen(3000, () => {
-  console.log("👃 \tGame view \thttp://localhost:3000/game.html");
-  console.log("🕹️ \tPlayer view \thttp://localhost:3000/player.html");
+  console.log('👃 \tGame view \thttp://localhost:3000/game.html');
+  console.log('🕹️ \tPlayer view \thttp://localhost:3000/player.html');
 });
 
 // Websocket definition
 // TODO: possibly separate primarily incoming player WS from primarily outgoing view WS?
 const wss = new WebSocketServer({ port: 8080 });
-console.log("🗣️ \tWebsocket \tws://localhost:8080/");
+console.log('🗣️ \tWebsocket \tws://localhost:8080/');
 
 let viewClient = { id: null, ws: null };
 
 // adds player to global game state
 const addPlayer = ({ name, id }) => {
   if (!name || !id) {
-    console.log("invalid player");
+    console.log('invalid player');
     return;
   }
 
@@ -91,12 +91,11 @@ const movePlayer = ({ vecX, vecY, id }) => {
 const generateNose = () => {
   const x = Math.floor(Math.random() * X_UPPER_BOUND + X_LOWER_BOUND);
   const y = Math.floor(Math.random() * Y_UPPER_BOUND + Y_LOWER_BOUND);
-  if(x <= 350 && y <= 200) return generateNose();
+  if (x <= 350 && y <= 200) return generateNose();
   return { x, y };
 };
 
-const calculateDistance = (x1, y1, x2, y2) =>
-  Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+const calculateDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
 const generateNewNose = () => {
   const { x, y } = generateNose();
@@ -113,49 +112,67 @@ const generateNewNose = () => {
   return { x, y };
 };
 
-wss.on("connection", (ws) => {
-  console.log("new connection");
+wss.on('connection', (ws) => {
+  console.log('new connection');
   const id = uuid();
-  ws.on("error", console.error);
 
-  ws.on("close", () => {
+  const handlePlayerDisconnect = (idToRemove) => {
+    delete gameState.players[idToRemove];
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'removePlayer',
+        playerId: idToRemove,
+      }),
+    );
+  };
+
+  ws.on('error', console.error);
+
+  ws.on('close', () => {
     if (id === viewClient.id) {
+      console.log('view client connection closed');
       viewClient = { id: null, ws: null };
+    } else {
+      console.log('player connection closed');
+      handlePlayerDisconnect(id);
     }
   });
 
-  ws.on("message", (data) => {
+  ws.on('message', (data) => {
     try {
       const json = JSON.parse(data);
       switch (json.type) {
-        case "initPlayer":
+        case 'initPlayer':
           addPlayer({ name: json.data.name, id });
           viewClient.ws.send(
             JSON.stringify({
-              type: "initPlayer",
+              type: 'initPlayer',
               player: gameState.players[id],
-            })
+            }),
           );
           ws.send(JSON.stringify({ data: { id } }));
           break;
 
-        case "initView":
-          console.log("initView");
+        case 'initView':
+          console.log('initView');
           if (viewClient.id) {
-            console.log("view client already connected");
+            console.log('view client already connected');
             break;
           }
           viewClient = { id, ws };
+
+          gameState.nose.previousLocation = gameState.nose.currentLocation;
           gameState.nose.currentLocation = generateNose();
+
           viewClient.ws.send(
             JSON.stringify({
-              type: "initView",
+              type: 'initView',
               gameState,
-            })
+            }),
           );
           break;
 
-        case "move":
+        case 'move':
           if (!gameState.players[id].isFinished) {
             movePlayer({
               vecX: json.data.direction.x,
@@ -165,21 +182,25 @@ wss.on("connection", (ws) => {
           }
           break;
 
-        case "finish":
+        case 'finish':
+          if (id !== viewClient.id) break;
+
           console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
           gameState.playersRemaining -= 1;
 
           // TODO: some race condition?
-          console.log(gameState)
+          console.log(gameState);
           if (gameState.playersRemaining <= 1) {
             const loser = Object.values(gameState.players).filter(
               (p) => !p.isFinished,
             )[0];
             console.log(`LOSER: ${JSON.stringify(loser)}`);
 
-            
-            gameState.nose = {previousLocation: gameState.nose.currentLocation, currentLocation: generateNewNose()}
+            gameState.nose = {
+              previousLocation: gameState.nose.currentLocation,
+              currentLocation: generateNewNose(),
+            };
             viewClient.ws.send(
               JSON.stringify({
                 type: 'loser',
@@ -188,19 +209,22 @@ wss.on("connection", (ws) => {
                 nextNoseLocation: gameState.nose.currentLocation,
               }),
             );
-  
           }
           break;
         case 'reset':
-          let xJitter;
-          let yJitter;
-          for(const[_,player] of Object.entries(gameState.players)) {
-            xJitter= Math.random() * (10) - 5;
-            yJitter= Math.random() * (10) - 5;
-            player.position = {x: gameState.nose.previousLocation.x + xJitter, y: gameState.nose.previousLocation.y + yJitter}
+          if (id !== viewClient.id) break;
+
+          // eslint-disable-next-line
+          for (const [_, player] of Object.entries(gameState.players)) {
+            const xJitter = Math.random() * (10) - 5;
+            const yJitter = Math.random() * (10) - 5;
+            player.position = {
+              x: gameState.nose.previousLocation.x + xJitter,
+              y: gameState.nose.previousLocation.y + yJitter,
+            };
             player.isFinished = false;
           }
-          gameState.playersRemaining = Object.entries(gameState.players).length
+          gameState.playersRemaining = Object.entries(gameState.players).length;
           console.log(gameState);
           break;
         default:
@@ -215,9 +239,9 @@ wss.on("connection", (ws) => {
     if (viewClient && viewClient.ws) {
       viewClient.ws.send(
         JSON.stringify({
-          type: "move",
+          type: 'move',
           gameState,
-        })
+        }),
       );
     }
     setTimeout(onTick, REFRESH_RATE_MS);
