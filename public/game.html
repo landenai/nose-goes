@@ -23,20 +23,26 @@
       }
 
       handleGameOver(name) {
-        const loserText = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 4, `${name} loses! 🐽`, {
+        this.removeNose();
+
+        const nameText = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 4) - 20, `${name}`, {
+          fontSize: '30px',
+          color: '#e11',
+        });
+        const loserText = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 4) + 20, `loses! 🐽`, {
           fontSize: '30px',
           color: '#000',
         });
+        nameText.setOrigin(0.5, 0.5);
         loserText.setOrigin(0.5, 0.5);
-        this.removeNose();
-        return loserText;
 
+        return [loserText, nameText];
       }
 
       // show a countdown timer and kick off the next game
-      handleIntermission(loserText, nextNoseLocation, previousNoseLocation) {
+      handleIntermission(loserTextArr, nextNoseLocation, previousNoseLocation) {
         // display a countdown timer
-        const countdownLabel = this.add.text(VIEW_WIDTH / 2, VIEW_HEIGHT / 3, 'New Round\nstarts in', {
+        const countdownLabel = this.add.text(VIEW_WIDTH / 2, (VIEW_HEIGHT / 2) - 70, 'New Round\nstarts in', {
           fontSize: '25px',
           color: '#000',
         });
@@ -60,7 +66,7 @@
             setTimeout(decrementCountdown, 1000);
           } else {
             // when countdown hits 0, clear the screen and kick off the next game
-            loserText.destroy();
+            loserTextArr.forEach(t => t.destroy());
             countdownLabel.destroy();
             countdownDigit.destroy();
 
@@ -154,11 +160,12 @@
               break;
             case "loser":
               const { playerId, nextNoseLocation, previousNoseLocation } = event;
-              const loser = this.playerInstances[playerId];
-              console.log(`new loser: ${loser.name}`);
+              const loserContainer = this.playerInstances[playerId];
+              loserContainer.isFinished = true; // disable movement
+              console.log(`new loser: ${loserContainer.name}`);
 
-              const loserText = this.handleGameOver(loser.name);
-              this.handleIntermission(loserText, nextNoseLocation, previousNoseLocation);
+              const loserTextArr = this.handleGameOver(loserContainer.name);
+              this.handleIntermission(loserTextArr, nextNoseLocation, previousNoseLocation);
 
 
               break;
