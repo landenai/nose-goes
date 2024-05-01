@@ -63,12 +63,12 @@ const normalizeDirection = ({ x, y }) => {
 const movePlayer = ({ vecX, vecY, id }) => {
   const { x: deltaX, y: deltaY } = normalizeDirection({ x: vecX, y: vecY });
   let { x: posX, y: posY } = gameState.players[id].position;
-  console.log(`---- move ${id} ----`);
-  console.log(`ogpos: ${posX} ${posY}`);
-  console.log(`invec: ${deltaX} ${deltaY}`);
-  console.log(
-    `delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(deltaY * SPEED)}`,
-  );
+  // console.log(`---- move ${id} ----`);
+  // console.log(`ogpos: ${posX} ${posY}`);
+  // console.log(`invec: ${deltaX} ${deltaY}`);
+  // console.log(
+  //   `delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(deltaY * SPEED)}`,
+  // );
 
   posX += Math.floor(deltaX * SPEED);
   posY += Math.floor(deltaY * SPEED);
@@ -79,7 +79,6 @@ const movePlayer = ({ vecX, vecY, id }) => {
   if (posY > Y_BOUND || posY < -10) {
     return;
   }
-  console.log(`  out: ${posX} ${posY}`);
 
   gameState.players[id] = {
     ...gameState.players[id],
@@ -169,6 +168,7 @@ wss.on("connection", (ws) => {
           gameState.playersRemaining -= 1;
 
           // TODO: some race condition?
+          console.log(gameState)
           if (gameState.playersRemaining <= 1) {
             const loser = Object.values(gameState.players).filter(
               (p) => !p.isFinished,
@@ -197,8 +197,9 @@ wss.on("connection", (ws) => {
             player.position = {x: gameState.nose.previousLocation.x + xJitter, y: gameState.nose.previousLocation.y + yJitter}
             player.isFinished = false;
           }
-          gameState.playersRemaining = gameState.players.length
+          gameState.playersRemaining = Object.entries(gameState.players).length
           console.log(gameState);
+          break;
         default:
           console.log(`unexpected message type: ${json.type}`);
       }
