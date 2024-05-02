@@ -279,7 +279,7 @@ wss.on('connection', (ws) => {
           gameState.playersRemaining = Object.entries(gameState.players).length;
 
           // start the playerDisconnect checks again
-          playerDisconnectTick();
+          playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
 
           console.log(gameState);
           break;
@@ -305,4 +305,4 @@ const viewRefreshTick = () => {
 };
 
 viewRefreshTick();
-playerDisconnectTick();
+playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
