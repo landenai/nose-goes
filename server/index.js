@@ -10,6 +10,7 @@ const Y_LOWER_BOUND = 40;
 const SPEED = 8;
 const MIN_DISTANCE = 200;
 const REFRESH_RATE_MS = 100;
+const PLAYER_IDLE_LIMIT_MS = 10 * 1000;
 
 const gameState = {
   players: {},
@@ -19,6 +20,10 @@ const gameState = {
   },
   playersRemaining: 0,
 };
+
+// map of player IDs to ws connections
+// for managing player connectivity separately from game state
+const wsClients = {};
 
 // Static file mgmt
 
@@ -37,7 +42,7 @@ console.log('🗣️ \tWebsocket \tws://localhost:8080/');
 let viewClient = { id: null, ws: null };
 
 // adds player to global game state
-const addPlayer = ({ name, id }) => {
+const addPlayer = ({ name, id, ws }) => {
   if (!name || !id) {
     console.log('invalid player');
     return;
@@ -51,9 +56,14 @@ const addPlayer = ({ name, id }) => {
     position: STARTING_POSITION,
     isFinished: false,
   };
+
+  wsClients[id] = {
+    isActive: true,
+    ws,
+  };
 };
 
-// assumes that x and y are non-zero (because of where it is invoked in `onTick()`
+// assumes that x and y are non-zero (because of where it is invoked in `viewRefreshTick()`
 const normalizeDirection = ({ x, y }) => {
   const magnitude = 1 / Math.sqrt(x ** 2 + y ** 2);
   return {
@@ -112,19 +122,20 @@ const generateNewNose = () => {
   return { x, y };
 };
 
+const handlePlayerDisconnect = (idToRemove) => {
+  delete gameState.players[idToRemove];
+  delete wsClients[idToRemove];
+  viewClient.ws.send(
+    JSON.stringify({
+      type: 'removePlayer',
+      playerId: idToRemove,
+    }),
+  );
+};
+
 wss.on('connection', (ws) => {
   console.log('new connection');
   const id = uuid();
-
-  const handlePlayerDisconnect = (idToRemove) => {
-    delete gameState.players[idToRemove];
-    viewClient.ws.send(
-      JSON.stringify({
-        type: 'removePlayer',
-        playerId: idToRemove,
-      }),
-    );
-  };
 
   ws.on('error', console.error);
 
@@ -143,7 +154,7 @@ wss.on('connection', (ws) => {
       const json = JSON.parse(data);
       switch (json.type) {
         case 'initPlayer':
-          addPlayer({ name: json.data.name, id });
+          addPlayer({ name: json.data.name, id, ws });
           viewClient.ws.send(
             JSON.stringify({
               type: 'initPlayer',
@@ -172,7 +183,10 @@ wss.on('connection', (ws) => {
           );
           break;
 
+        // should be receiving this from every player every PLAYER_REFRESH_RATE_MS
         case 'move':
+          wsClients[id].isActive = true;
+
           if (!gameState.players[id].isFinished) {
             movePlayer({
               vecX: json.data.direction.x,
@@ -234,18 +248,34 @@ wss.on('connection', (ws) => {
       console.log(e);
     }
   });
-
-  const onTick = () => {
-    if (viewClient && viewClient.ws) {
-      viewClient.ws.send(
-        JSON.stringify({
-          type: 'move',
-          gameState,
-        }),
-      );
-    }
-    setTimeout(onTick, REFRESH_RATE_MS);
-  };
-
-  onTick();
 });
+
+const viewRefreshTick = () => {
+  if (viewClient && viewClient.ws) {
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'move',
+        gameState,
+      }),
+    );
+  }
+  setTimeout(viewRefreshTick, REFRESH_RATE_MS);
+};
+
+const disconnectedPlayerCleanupTick = () => {
+  // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
+  Object.entries(wsClients).forEach(([playerId, { isActive, ws }]) => {
+    // remove any inactive connections
+    if (!isActive) {
+      console.log(`terminating ${playerId}`);
+      ws.terminate(); // close the connection, which triggers `on('close')`
+    }
+
+    // now assume inactivity until player sends message up
+    wsClients[playerId].isActive = false;
+  });
+  setTimeout(disconnectedPlayerCleanupTick, PLAYER_IDLE_LIMIT_MS);
+};
+
+viewRefreshTick();
+disconnectedPlayerCleanupTick();
