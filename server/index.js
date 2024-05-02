@@ -74,7 +74,7 @@ const addPlayer = ({ name, id, ws }) => {
   gameState.players[id] = {
     id,
     name,
-    position: STARTING_POSITION,
+    position: {x: STARTING_POSITION.x + getXJitter(), y: STARTING_POSITION.y + getYJitter()},
     isFinished: false,
   };
 
@@ -96,12 +96,7 @@ const normalizeDirection = ({ x, y }) => {
 const movePlayer = ({ vecX, vecY, id }) => {
   const { x: deltaX, y: deltaY } = normalizeDirection({ x: vecX, y: vecY });
   let { x: posX, y: posY } = gameState.players[id].position;
-  // console.log(`---- move ${id} ----`);
-  // console.log(`ogpos: ${posX} ${posY}`);
-  // console.log(`invec: ${deltaX} ${deltaY}`);
-  // console.log(
-  //   `delta: ${Math.floor(deltaX * SPEED)} ${Math.floor(deltaY * SPEED)}`,
-  // );
+
 
   posX += Math.floor(deltaX * SPEED);
   posY += Math.floor(deltaY * SPEED);
@@ -268,11 +263,9 @@ wss.on('connection', (ws) => {
 
           // eslint-disable-next-line
           for (const [_, player] of Object.entries(gameState.players)) {
-            const xJitter = Math.random() * (10) - 5;
-            const yJitter = Math.random() * (10) - 5;
             player.position = {
-              x: gameState.nose.previousLocation.x + xJitter,
-              y: gameState.nose.previousLocation.y + yJitter,
+              x: gameState.nose.previousLocation.x + getXJitter(),
+              y: gameState.nose.previousLocation.y + getYJitter(),
             };
             player.isFinished = false;
           }
@@ -303,6 +296,13 @@ const viewRefreshTick = () => {
   }
   setTimeout(viewRefreshTick, REFRESH_RATE_MS);
 };
+
+const getXJitter = () => {
+  return Math.random() * (40) - 20
+}
+const getYJitter = () => {
+  return Math.random() * (40) - 20
+}
 
 viewRefreshTick();
 playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
