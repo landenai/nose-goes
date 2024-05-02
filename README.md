@@ -30,17 +30,17 @@ npm start
 
 ## TODO:
 
-- [ ] Cute little stick dudes
+- [x] Cute little stick dudes
   - [x] Make / Add a sprite sheet
   - [x] Animate it
   - [x] Make them distinguishable
-- [ ] Make it a game
+- [x] Make it a game
   - [x] Start: Drop a nose randomly
-  - [ ] End: All players are on the nose
+  - [x] End: All players are on the nose
   - [x] Loser: last person to the nose => some sad animation?
   - [x] Winner: points?
-- [ ] Websocket management
-  - [ ] drop player on disconnect
+- [x] Websocket management
+  - [x] drop player on disconnect
 - [x] Hosting
   - [x] host the game server somewhere
 - [ ] Misc
