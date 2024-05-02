@@ -25,6 +25,10 @@ const gameState = {
 // for managing player connectivity separately from game state
 const wsClients = {};
 
+// a reference to the player disconnection setTimeout
+// a global reference so that we can clear it when the game ends
+let playerDisconnectTimeout;
+
 // Static file mgmt
 
 const app = express();
@@ -122,6 +126,43 @@ const generateNewNose = () => {
   return { x, y };
 };
 
+// decrements player count and checks if end game
+// if so, triggers game over loop
+const markOneLessPlayer = () => {
+  gameState.playersRemaining -= 1;
+
+  // TODO: some race condition?
+  console.log(gameState);
+
+  // if 1 or less players remaining, end the game!
+  if (gameState.playersRemaining <= 1) {
+    // first, clear the playerDisconnectTimeout, so players aren't disconnected
+    // for not moving during the intermission
+    clearTimeout(playerDisconnectTimeout);
+
+    const loser = Object.values(gameState.players).filter(
+      (p) => !p.isFinished,
+    )[0];
+    console.log(`LOSER: ${JSON.stringify(loser)}`);
+
+    gameState.nose = {
+      previousLocation: gameState.nose.currentLocation,
+      currentLocation: generateNewNose(),
+    };
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'loser',
+        playerId: loser.id,
+        previousNoseLocation: gameState.nose.previousLocation,
+        nextNoseLocation: gameState.nose.currentLocation,
+      }),
+    );
+  }
+};
+
+// remove player from all global states
+// tells the game to remove them from view
+// and decrements the player count, potentially resulting in an end game
 const handlePlayerDisconnect = (idToRemove) => {
   delete gameState.players[idToRemove];
   delete wsClients[idToRemove];
@@ -131,6 +172,7 @@ const handlePlayerDisconnect = (idToRemove) => {
       playerId: idToRemove,
     }),
   );
+  markOneLessPlayer();
 };
 
 wss.on('connection', (ws) => {
@@ -201,30 +243,9 @@ wss.on('connection', (ws) => {
 
           console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
-          gameState.playersRemaining -= 1;
-
-          // TODO: some race condition?
-          console.log(gameState);
-          if (gameState.playersRemaining <= 1) {
-            const loser = Object.values(gameState.players).filter(
-              (p) => !p.isFinished,
-            )[0];
-            console.log(`LOSER: ${JSON.stringify(loser)}`);
-
-            gameState.nose = {
-              previousLocation: gameState.nose.currentLocation,
-              currentLocation: generateNewNose(),
-            };
-            viewClient.ws.send(
-              JSON.stringify({
-                type: 'loser',
-                playerId: loser.id,
-                previousNoseLocation: gameState.nose.previousLocation,
-                nextNoseLocation: gameState.nose.currentLocation,
-              }),
-            );
-          }
+          markOneLessPlayer();
           break;
+
         case 'reset':
           if (id !== viewClient.id) break;
 
@@ -239,6 +260,10 @@ wss.on('connection', (ws) => {
             player.isFinished = false;
           }
           gameState.playersRemaining = Object.entries(gameState.players).length;
+
+          // start the playerDisconnect checks again
+          playerDisconnectTimeout();
+
           console.log(gameState);
           break;
         default:
@@ -262,7 +287,9 @@ const viewRefreshTick = () => {
   setTimeout(viewRefreshTick, REFRESH_RATE_MS);
 };
 
-const disconnectedPlayerCleanupTick = () => {
+const playerDisconnectTick = () => {
+  console.log('checking for inactive players');
+
   // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
   Object.entries(wsClients).forEach(([playerId, { isActive, ws }]) => {
     // remove any inactive connections
@@ -274,8 +301,8 @@ const disconnectedPlayerCleanupTick = () => {
     // now assume inactivity until player sends message up
     wsClients[playerId].isActive = false;
   });
-  setTimeout(disconnectedPlayerCleanupTick, PLAYER_IDLE_LIMIT_MS);
+  playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
 };
 
 viewRefreshTick();
-disconnectedPlayerCleanupTick();
+playerDisconnectTick();

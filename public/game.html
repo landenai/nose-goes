@@ -145,6 +145,8 @@
               break;
             case "removePlayer":
               if (this.playerInstances[event.playerId]) {
+                console.log(`removing ${event.playerId} for inactivity`);
+                this.playerInstances[event.playerId].destroy();
                 delete this.playerInstances[event.playerId];
               }
               break;
