@@ -25,10 +25,6 @@ const gameState = {
 // for managing player connectivity separately from game state
 const wsClients = {};
 
-// a reference to the player disconnection setTimeout
-// a global reference so that we can clear it when the game ends
-let playerDisconnectTimeout;
-
 // Static file mgmt
 
 const app = express();
@@ -37,6 +33,27 @@ app.listen(3000, () => {
   console.log('👃 \tGame view \thttp://localhost:3000/game.html');
   console.log('🕹️ \tPlayer view \thttp://localhost:3000/player.html');
 });
+
+// player disconnection handling
+// a reference to the player disconnection setTimeout
+// a global reference so that we can clear it when the game ends
+let playerDisconnectTimeout;
+const playerDisconnectTick = () => {
+  console.log('checking for inactive players');
+
+  // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
+  Object.entries(wsClients).forEach(([playerId, { isActive, ws }]) => {
+    // remove any inactive connections
+    if (!isActive) {
+      console.log(`terminating ${playerId}`);
+      ws.terminate(); // close the connection, which triggers `on('close')`
+    }
+
+    // now assume inactivity until player sends message up
+    wsClients[playerId].isActive = false;
+  });
+  playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
+};
 
 // Websocket definition
 // TODO: possibly separate primarily incoming player WS from primarily outgoing view WS?
@@ -262,7 +279,7 @@ wss.on('connection', (ws) => {
           gameState.playersRemaining = Object.entries(gameState.players).length;
 
           // start the playerDisconnect checks again
-          playerDisconnectTimeout();
+          playerDisconnectTick();
 
           console.log(gameState);
           break;
@@ -285,23 +302,6 @@ const viewRefreshTick = () => {
     );
   }
   setTimeout(viewRefreshTick, REFRESH_RATE_MS);
-};
-
-const playerDisconnectTick = () => {
-  console.log('checking for inactive players');
-
-  // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
-  Object.entries(wsClients).forEach(([playerId, { isActive, ws }]) => {
-    // remove any inactive connections
-    if (!isActive) {
-      console.log(`terminating ${playerId}`);
-      ws.terminate(); // close the connection, which triggers `on('close')`
-    }
-
-    // now assume inactivity until player sends message up
-    wsClients[playerId].isActive = false;
-  });
-  playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
 };
 
 viewRefreshTick();

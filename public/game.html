@@ -145,6 +145,7 @@
               break;
             case "removePlayer":
               if (this.playerInstances[event.playerId]) {
+                this.declareDisconnected(this.playerInstances[event.playerId].name);
                 console.log(`removing ${event.playerId} for inactivity`);
                 this.playerInstances[event.playerId].destroy();
                 delete this.playerInstances[event.playerId];
@@ -318,6 +319,15 @@
         });
         this.physics.world.enableBody(text);
         this.physics.moveTo(text, xPos, -20);
+      }
+
+      declareDisconnected(name) {
+        const text = this.add.text(200, 250, `${name} disconnected for inactivity 😴`, {
+          fontSize: '20px',
+          color: '#000',
+        });
+        this.physics.world.enableBody(text);
+        this.physics.moveTo(text, 200, -20);
       }
     }
 
