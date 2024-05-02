@@ -10,6 +10,7 @@ const Y_LOWER_BOUND = 40;
 const SPEED = 8;
 const MIN_DISTANCE = 200;
 const REFRESH_RATE_MS = 100;
+const PLAYER_IDLE_LIMIT_MS = 10 * 1000;
 
 const gameState = {
   players: {},
@@ -20,6 +21,10 @@ const gameState = {
   playersRemaining: 0,
 };
 
+// map of player IDs to ws connections
+// for managing player connectivity separately from game state
+const wsClients = {};
+
 // Static file mgmt
 
 const app = express();
@@ -29,6 +34,27 @@ app.listen(3000, () => {
   console.log('🕹️ \tPlayer view \thttp://localhost:3000/player.html');
 });
 
+// player disconnection handling
+// a reference to the player disconnection setTimeout
+// a global reference so that we can clear it when the game ends
+let playerDisconnectTimeout;
+const playerDisconnectTick = () => {
+  console.log('checking for inactive players');
+
+  // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
+  Object.entries(wsClients).forEach(([playerId, { isActive, ws }]) => {
+    // remove any inactive connections
+    if (!isActive) {
+      console.log(`terminating ${playerId}`);
+      ws.terminate(); // close the connection, which triggers `on('close')`
+    }
+
+    // now assume inactivity until player sends message up
+    wsClients[playerId].isActive = false;
+  });
+  playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
+};
+
 // Websocket definition
 // TODO: possibly separate primarily incoming player WS from primarily outgoing view WS?
 const wss = new WebSocketServer({ port: 8080 });
@@ -37,7 +63,7 @@ console.log('🗣️ \tWebsocket \tws://localhost:8080/');
 let viewClient = { id: null, ws: null };
 
 // adds player to global game state
-const addPlayer = ({ name, id }) => {
+const addPlayer = ({ name, id, ws }) => {
   if (!name || !id) {
     console.log('invalid player');
     return;
@@ -51,9 +77,14 @@ const addPlayer = ({ name, id }) => {
     position: STARTING_POSITION,
     isFinished: false,
   };
+
+  wsClients[id] = {
+    isActive: true,
+    ws,
+  };
 };
 
-// assumes that x and y are non-zero (because of where it is invoked in `onTick()`
+// assumes that x and y are non-zero (because of where it is invoked in `viewRefreshTick()`
 const normalizeDirection = ({ x, y }) => {
   const magnitude = 1 / Math.sqrt(x ** 2 + y ** 2);
   return {
@@ -112,19 +143,58 @@ const generateNewNose = () => {
   return { x, y };
 };
 
+// decrements player count and checks if end game
+// if so, triggers game over loop
+const markOneLessPlayer = () => {
+  gameState.playersRemaining -= 1;
+
+  // TODO: some race condition?
+  console.log(gameState);
+
+  // if 1 or less players remaining, end the game!
+  if (gameState.playersRemaining <= 1) {
+    // first, clear the playerDisconnectTimeout, so players aren't disconnected
+    // for not moving during the intermission
+    clearTimeout(playerDisconnectTimeout);
+
+    const loser = Object.values(gameState.players).filter(
+      (p) => !p.isFinished,
+    )[0];
+    console.log(`LOSER: ${JSON.stringify(loser)}`);
+
+    gameState.nose = {
+      previousLocation: gameState.nose.currentLocation,
+      currentLocation: generateNewNose(),
+    };
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'loser',
+        playerId: loser.id,
+        previousNoseLocation: gameState.nose.previousLocation,
+        nextNoseLocation: gameState.nose.currentLocation,
+      }),
+    );
+  }
+};
+
+// remove player from all global states
+// tells the game to remove them from view
+// and decrements the player count, potentially resulting in an end game
+const handlePlayerDisconnect = (idToRemove) => {
+  delete gameState.players[idToRemove];
+  delete wsClients[idToRemove];
+  viewClient.ws.send(
+    JSON.stringify({
+      type: 'removePlayer',
+      playerId: idToRemove,
+    }),
+  );
+  markOneLessPlayer();
+};
+
 wss.on('connection', (ws) => {
   console.log('new connection');
   const id = uuid();
-
-  const handlePlayerDisconnect = (idToRemove) => {
-    delete gameState.players[idToRemove];
-    viewClient.ws.send(
-      JSON.stringify({
-        type: 'removePlayer',
-        playerId: idToRemove,
-      }),
-    );
-  };
 
   ws.on('error', console.error);
 
@@ -143,7 +213,7 @@ wss.on('connection', (ws) => {
       const json = JSON.parse(data);
       switch (json.type) {
         case 'initPlayer':
-          addPlayer({ name: json.data.name, id });
+          addPlayer({ name: json.data.name, id, ws });
           viewClient.ws.send(
             JSON.stringify({
               type: 'initPlayer',
@@ -172,7 +242,10 @@ wss.on('connection', (ws) => {
           );
           break;
 
+        // should be receiving this from every player every PLAYER_REFRESH_RATE_MS
         case 'move':
+          wsClients[id].isActive = true;
+
           if (!gameState.players[id].isFinished) {
             movePlayer({
               vecX: json.data.direction.x,
@@ -187,30 +260,9 @@ wss.on('connection', (ws) => {
 
           console.log(`finishing for ${json.data.id}`);
           gameState.players[json.data.id].isFinished = true;
-          gameState.playersRemaining -= 1;
-
-          // TODO: some race condition?
-          console.log(gameState);
-          if (gameState.playersRemaining <= 1) {
-            const loser = Object.values(gameState.players).filter(
-              (p) => !p.isFinished,
-            )[0];
-            console.log(`LOSER: ${JSON.stringify(loser)}`);
-
-            gameState.nose = {
-              previousLocation: gameState.nose.currentLocation,
-              currentLocation: generateNewNose(),
-            };
-            viewClient.ws.send(
-              JSON.stringify({
-                type: 'loser',
-                playerId: loser.id,
-                previousNoseLocation: gameState.nose.previousLocation,
-                nextNoseLocation: gameState.nose.currentLocation,
-              }),
-            );
-          }
+          markOneLessPlayer();
           break;
+
         case 'reset':
           if (id !== viewClient.id) break;
 
@@ -225,6 +277,10 @@ wss.on('connection', (ws) => {
             player.isFinished = false;
           }
           gameState.playersRemaining = Object.entries(gameState.players).length;
+
+          // start the playerDisconnect checks again
+          playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
+
           console.log(gameState);
           break;
         default:
@@ -234,18 +290,19 @@ wss.on('connection', (ws) => {
       console.log(e);
     }
   });
-
-  const onTick = () => {
-    if (viewClient && viewClient.ws) {
-      viewClient.ws.send(
-        JSON.stringify({
-          type: 'move',
-          gameState,
-        }),
-      );
-    }
-    setTimeout(onTick, REFRESH_RATE_MS);
-  };
-
-  onTick();
 });
+
+const viewRefreshTick = () => {
+  if (viewClient && viewClient.ws) {
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'move',
+        gameState,
+      }),
+    );
+  }
+  setTimeout(viewRefreshTick, REFRESH_RATE_MS);
+};
+
+viewRefreshTick();
+playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
