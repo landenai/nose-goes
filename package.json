@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./server/index.js",
     "watch": "nodemon ./server/index.js",
-    "sneeze": "concurrently -P \"NODE_ENV='test' node ./server/index.js\" \"sleep 2; node ./test/sneeze.js {*}\"",
+    "sneeze": "concurrently -P \"NODE_ENV='test' node ./server/index.js\" \"sleep 2; node ./test/sneeze.js {@}\"",
     "lint": "eslint ."
   },
   "author": "",

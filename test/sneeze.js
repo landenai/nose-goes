@@ -20,13 +20,13 @@ if (argv.h) {
 
     Options:
       -h           help
-      -i {number}  # of snots (player instances) to spawn (default ${D_PLAYERS})
+      -p {number}  # of snots (player instances) to spawn (default ${D_PLAYERS})
       -t {number}  # of seconds to run the simulation (default ${D_RUNTIME_S})
     `);
   process.exit(0);
 }
 
-const numPlayers = argv.i || D_PLAYERS;
+const numPlayers = argv.p || D_PLAYERS;
 const runtime = (argv.t || D_RUNTIME_S) * 1000;
 
 console.log(`running test simulation w/ ${numPlayers} players for ${runtime} ms`);
