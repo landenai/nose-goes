@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import { v4 as uuid } from 'uuid';
 import express from 'express';
 
@@ -11,6 +11,8 @@ const SPEED = 8;
 const MIN_DISTANCE = 200;
 const REFRESH_RATE_MS = 100;
 const PLAYER_IDLE_LIMIT_MS = 10 * 1000;
+const NOSE_REMINDER_MS = 2 * 1000;
+const IN_TEST_MODE = process.env.NODE_ENV === 'test';
 
 const gameState = {
   players: {},
@@ -39,6 +41,7 @@ app.listen(3000, () => {
 // a global reference so that we can clear it when the game ends
 let playerDisconnectTimeout;
 const playerDisconnectTick = () => {
+  console.log(gameState);
   console.log('checking for inactive players');
 
   // for every player, check if movementReceived in last PLAYER_IDLE_LIMIT_MS period
@@ -74,7 +77,7 @@ const addPlayer = ({ name, id, ws }) => {
   gameState.players[id] = {
     id,
     name,
-    position: {x: STARTING_POSITION.x + getXJitter(), y: STARTING_POSITION.y + getYJitter()},
+    position: { x: STARTING_POSITION.x + getXJitter(), y: STARTING_POSITION.y + getYJitter() },
     isFinished: false,
   };
 
@@ -96,7 +99,6 @@ const normalizeDirection = ({ x, y }) => {
 const movePlayer = ({ vecX, vecY, id }) => {
   const { x: deltaX, y: deltaY } = normalizeDirection({ x: vecX, y: vecY });
   let { x: posX, y: posY } = gameState.players[id].position;
-
 
   posX += Math.floor(deltaX * SPEED);
   posY += Math.floor(deltaY * SPEED);
@@ -141,13 +143,10 @@ const generateNewNose = () => {
 // decrements player count and checks if end game
 // if so, triggers game over loop
 const markOneLessPlayer = () => {
-  gameState.playersRemaining -= 1;
+  if (gameState.playersRemaining > 0) gameState.playersRemaining -= 1;
 
-  // TODO: some race condition?
-  console.log(gameState);
-
-  // if 1 or less players remaining, end the game!
-  if (gameState.playersRemaining <= 1) {
+  // if 1 remaining, end the game!
+  if (gameState.playersRemaining === 1) {
     // first, clear the playerDisconnectTimeout, so players aren't disconnected
     // for not moving during the intermission
     clearTimeout(playerDisconnectTimeout);
@@ -155,20 +154,25 @@ const markOneLessPlayer = () => {
     const loser = Object.values(gameState.players).filter(
       (p) => !p.isFinished,
     )[0];
-    console.log(`LOSER: ${JSON.stringify(loser)}`);
+    if (loser) {
+      console.log(`LOSER: ${JSON.stringify(loser)}`);
 
-    gameState.nose = {
-      previousLocation: gameState.nose.currentLocation,
-      currentLocation: generateNewNose(),
-    };
-    viewClient.ws.send(
-      JSON.stringify({
-        type: 'loser',
-        playerId: loser.id,
-        previousNoseLocation: gameState.nose.previousLocation,
-        nextNoseLocation: gameState.nose.currentLocation,
-      }),
-    );
+      gameState.nose = {
+        previousLocation: gameState.nose.currentLocation,
+        currentLocation: generateNewNose(),
+      };
+
+      if (viewClient && viewClient.ws) {
+        viewClient.ws.send(
+          JSON.stringify({
+            type: 'loser',
+            playerId: loser.id,
+            previousNoseLocation: gameState.nose.previousLocation,
+            nextNoseLocation: gameState.nose.currentLocation,
+          }),
+        );
+      }
+    }
   }
 };
 
@@ -178,12 +182,14 @@ const markOneLessPlayer = () => {
 const handlePlayerDisconnect = (idToRemove) => {
   delete gameState.players[idToRemove];
   delete wsClients[idToRemove];
-  viewClient.ws.send(
-    JSON.stringify({
-      type: 'removePlayer',
-      playerId: idToRemove,
-    }),
-  );
+  if (viewClient && viewClient.ws) {
+    viewClient.ws.send(
+      JSON.stringify({
+        type: 'removePlayer',
+        playerId: idToRemove,
+      }),
+    );
+  }
   markOneLessPlayer();
 };
 
@@ -208,14 +214,17 @@ wss.on('connection', (ws) => {
       const json = JSON.parse(data);
       switch (json.type) {
         case 'initPlayer':
+          console.log(`adding ${json.data.name} at ${id}`);
           addPlayer({ name: json.data.name, id, ws });
-          viewClient.ws.send(
-            JSON.stringify({
-              type: 'initPlayer',
-              player: gameState.players[id],
-            }),
-          );
-          ws.send(JSON.stringify({ data: { id } }));
+
+          if (viewClient && viewClient.ws) {
+            viewClient.ws.send(
+              JSON.stringify({
+                type: 'initPlayer',
+                player: gameState.players[id],
+              }),
+            );
+          }
           break;
 
         case 'initView':
@@ -276,6 +285,7 @@ wss.on('connection', (ws) => {
 
           console.log(gameState);
           break;
+
         default:
           console.log(`unexpected message type: ${json.type}`);
       }
@@ -297,12 +307,24 @@ const viewRefreshTick = () => {
   setTimeout(viewRefreshTick, REFRESH_RATE_MS);
 };
 
-const getXJitter = () => {
-  return Math.random() * (40) - 20
-}
-const getYJitter = () => {
-  return Math.random() * (40) - 20
-}
+const snotBroadcast = () => {
+  Object.keys(wsClients).forEach((id) => {
+    const client = wsClients[id].ws;
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({
+        playerLocation: gameState.players[id].position,
+        noseLocation: gameState.nose.currentLocation,
+      }));
+    }
+  });
+  setTimeout(snotBroadcast, NOSE_REMINDER_MS);
+};
+
+const getXJitter = () => Math.random() * (40) - 20;
+const getYJitter = () => Math.random() * (40) - 20;
 
 viewRefreshTick();
 playerDisconnectTimeout = setTimeout(playerDisconnectTick, PLAYER_IDLE_LIMIT_MS);
+
+// if in test mode, broadcast the player and nose location for the snots regularly
+if (IN_TEST_MODE) setTimeout(snotBroadcast, NOSE_REMINDER_MS);

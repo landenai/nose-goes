@@ -152,7 +152,7 @@
             case "removePlayer":
               if (this.playerInstances[event.playerId]) {
                 this.declareDisconnected(this.playerInstances[event.playerId].name);
-                console.log(`removing ${event.playerId} for inactivity`);
+                console.log(`disconnecting ${event.playerId}`);
                 this.playerInstances[event.playerId].destroy();
                 delete this.playerInstances[event.playerId];
               }
@@ -328,7 +328,7 @@
       }
 
       declareDisconnected(name) {
-        const text = this.add.text(200, 250, `${name} disconnected for inactivity 😴`, {
+        const text = this.add.text(200, 250, `${name} disconnected 😴`, {
           fontSize: '20px',
           color: '#000',
         });
