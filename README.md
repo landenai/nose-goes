@@ -17,6 +17,12 @@ open game.html
 
 ## run the websocket server on 8080
 npm start
+
+## simulate a mob of players
+npm run sneeze
+
+### simulate w/ custom settings (20 players + 60s)
+npm run sneeze -- -- -p 20 -t 60
 ```
 
 ## Things to consider
