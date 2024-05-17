@@ -19,7 +19,7 @@ let noseLocation = {
 }; // just some random spot
 let myLocation = { x: 0, y: 0 };
 
-const jitter = () => Math.random() * 20 - 10;
+const jitter = () => Math.random() * 50 - 10;
 
 const calculateDirectionToNose = () => ({
   x: (noseLocation.x - myLocation.x) + jitter(),
