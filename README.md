@@ -51,3 +51,5 @@ npm start
 ## Acknowledgements
 
 - cute stickmen from [crazygamer3124](https://crazygamer3124.itch.io/pixel-stickman-8x8)
+- avatar faces from [dicebear](https://www.dicebear.com/playground/)
+- client-server architecture guidance from [Gabriel Gambetta](https://www.gabrielgambetta.com/client-server-game-architecture.html)
